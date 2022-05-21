@@ -1,0 +1,12 @@
+[package]
+name = "adventure"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+winit = "0.26"
+pollster = "0.2.5"
+env_logger = "0.9"
+log = "0.4"
+wgpu = "0.12"
+cfg-if = "1"
