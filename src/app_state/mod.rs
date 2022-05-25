@@ -1,15 +1,19 @@
 use std::iter;
 use winit::{event::WindowEvent, window::Window};
 
-pub struct State {
+use crate::{world::World};
+
+pub struct GameState {
     surface: wgpu::Surface,
     device: wgpu::Device,
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
-    pub size: winit::dpi::PhysicalSize<u32>,
+    size: winit::dpi::PhysicalSize<u32>,
+
+    world: World,
 }
 
-impl State {
+impl GameState {
     pub async fn new(window: &Window) -> Self {
         let size = window.inner_size();
 
@@ -46,12 +50,18 @@ impl State {
         surface.configure(&device, &config);
 
         Self {
+            world: World::new(&device, &config),
+
             surface,
             device,
             queue,
             config,
             size,
         }
+    }
+
+    pub fn get_size(&self) -> winit::dpi::PhysicalSize<u32> {
+        self.size
     }
 
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
@@ -68,7 +78,9 @@ impl State {
         false
     }
 
-    pub fn update(&mut self) {}
+    pub fn update(&mut self) {
+        self.world.update();
+    }
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
@@ -81,9 +93,8 @@ impl State {
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                 label: Some("Render Encoder"),
             });
-
         {
-            let _render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
                 color_attachments: &[wgpu::RenderPassColorAttachment {
                     view: &view,
@@ -100,6 +111,7 @@ impl State {
                 }],
                 depth_stencil_attachment: None,
             });
+            self.world.draw(&mut render_pass);
         }
 
         self.queue.submit(iter::once(encoder.finish()));

@@ -10,3 +10,5 @@ env_logger = "0.9"
 log = "0.4"
 wgpu = "0.12"
 cfg-if = "1"
+bytemuck = { version = "1.9.1", features = [ "derive" ] }
+
