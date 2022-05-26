@@ -1,10 +1,10 @@
 use std::collections::{self, BTreeMap};
 
-use wgpu::{ Device, RenderPipeline, SurfaceConfiguration, RenderPass, include_wgsl};
+use wgpu::{ Device, RenderPipeline, SurfaceConfiguration, RenderPass, include_wgsl, util::DeviceExt};
 
 use crate::{utils::{
     position::Position,
-}, vertex::Vertex};
+}, vertex::Vertex, camera::{Camera, CameraUniform}};
 
 use self::{chunk::Chunk, block::block_handlers::load_block_handlers};
 
@@ -13,17 +13,31 @@ pub mod chunk;
 
 pub struct World {
     chunks: collections::BTreeMap<Position, Chunk>,
-    render_pipeline: RenderPipeline
+    render_pipeline: RenderPipeline,
+    camera: Camera,
 }
 
 impl World {
     pub fn new(device: &Device, config: &SurfaceConfiguration) -> Self {
         let shader = device.create_shader_module(&include_wgsl!("shaders/main.wgsl"));
 
+        let camera = Camera::new(
+            &device,
+            (0.0, 1.0, 2.0).into(),
+            (0.0, 0.0, 0.0).into(),
+            cgmath::Vector3::unit_y(),
+            config.width as f32 / config.height as f32,
+            45.0,
+            0.1,
+            100.0,
+        );
+
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[],
+                bind_group_layouts: &[
+                    camera.get_bind_group_layout(),
+                ],
                 push_constant_ranges: &[],
             });
 
@@ -70,7 +84,7 @@ impl World {
         let chunk_pos = Position { x: 0, y: 0, z: 0 };
         chunks.insert(chunk_pos.clone(), Chunk::generate(chunk_pos.clone(), device));
 
-        World { chunks, render_pipeline }
+        return World { chunks, render_pipeline, camera };
     }
 
     pub fn update(self: &mut Self) {
@@ -81,6 +95,7 @@ impl World {
 
     pub fn draw<'a>(self: &'a Self, render_pass: &mut RenderPass<'a>) {
         render_pass.set_pipeline(&self.render_pipeline);
+        render_pass.set_bind_group(0, self.camera.get_bind_group(), &[]);
         for (_pos, chunk) in self.chunks.iter() {
             chunk.draw(render_pass);
         }

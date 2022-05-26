@@ -8,6 +8,7 @@ pub mod app_state;
 pub mod utils;
 pub mod world;
 pub mod vertex;
+pub mod camera;
 
 fn handle_input(event: &WindowEvent, state: &mut app_state::GameState, control_flow: &mut ControlFlow) {
     if state.input(event) {

@@ -47,10 +47,10 @@ impl Chunk {
         blocks[0].id = 1;
 
         let vertex = Self::generate_vertex(&blocks);
-        println!("vertex: {}", vertex.len());
-        for v in vertex.iter() {
-            println!("v: {}, {}, {}; c: {}, {}, {}", v.position[0], v.position[1], v.position[2], v.color[0], v.color[1], v.color[2]);
-        }
+        // println!("vertex: {}", vertex.len());
+        // for v in vertex.iter() {
+        //     println!("v: {}, {}, {}; c: {}, {}, {}", v.position[0], v.position[1], v.position[2], v.color[0], v.color[1], v.color[2]);
+        // }
 
         let vertex_buffer = device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {

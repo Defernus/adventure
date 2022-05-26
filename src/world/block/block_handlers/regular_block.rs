@@ -15,29 +15,29 @@ impl RegularBlock {
 }
 
 impl IBlockHandler for RegularBlock {
-    fn is_solid(self: &Self, block_data: BlockData) -> bool {
+    fn is_solid(self: &Self, _block_data: BlockData) -> bool {
         return self.is_solid;
     }
     
-    fn is_bottom_face_solid(self: &Self, block_data: BlockData) -> bool {
+    fn is_bottom_face_solid(self: &Self, _block_data: BlockData) -> bool {
         return self.is_solid;
     }
-    fn is_east_face_solid(self: &Self, block_data: BlockData) -> bool {
+    fn is_east_face_solid(self: &Self, _block_data: BlockData) -> bool {
         return self.is_solid;
     }
-    fn is_face_solid(self: &Self, block_data: BlockData, face: Direction) -> bool {
+    fn is_face_solid(self: &Self, _block_data: BlockData, face: Direction) -> bool {
         return self.is_solid;
     }
-    fn is_north_face_solid(self: &Self, block_data: BlockData) -> bool {
+    fn is_north_face_solid(self: &Self, _block_data: BlockData) -> bool {
         return self.is_solid;
     }
-    fn is_south_face_solid(self: &Self, block_data: BlockData) -> bool {
+    fn is_south_face_solid(self: &Self, _block_data: BlockData) -> bool {
         return self.is_solid;
     }
-    fn is_top_face_solid(self: &Self, block_data: BlockData) -> bool {
+    fn is_top_face_solid(self: &Self, _block_data: BlockData) -> bool {
         return self.is_solid;
     }
-    fn is_west_face_solid(self: &Self, block_data: BlockData) -> bool {
+    fn is_west_face_solid(self: &Self, _block_data: BlockData) -> bool {
         return self.is_solid;
     }
     
@@ -51,7 +51,7 @@ impl IBlockHandler for RegularBlock {
                 let x = pos.x as f32;
                 let y = pos.y as f32;
                 let z = pos.z as f32;
-                println!("block {} {} {}", x, y, z);
+                // println!("block {} {} {}", x, y, z);
                 
                 vertex.push(Vertex { position: [x, y, z], color });
                 vertex.push(Vertex { position: [x + 1., y, z], color });

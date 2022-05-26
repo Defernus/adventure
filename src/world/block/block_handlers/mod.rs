@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{vertex::{Vertex}, world::chunk::CHUNK_VOLUME, utils::direction::Direction};
 
 use self::regular_block::RegularBlock;
@@ -22,7 +20,7 @@ pub trait IBlockHandler {
     fn update_vertex(self: &Self, blocks: &[Block; CHUNK_VOLUME], block_data: BlockData, vertex: &mut Vec<Vertex>);
 }
 
-const block_handlers: [&'static dyn IBlockHandler; 2] = [
+const BLOCK_HANDLERS: [&'static dyn IBlockHandler; 2] = [
   &RegularBlock::new(false, "air", None),
   &RegularBlock::new(false, "stone", Some([0.5, 0.5, 0.5])),
 ];
@@ -31,8 +29,8 @@ pub fn load_block_handlers() {
 }
 
 pub fn get_block_handler(block: Block) -> &'static dyn IBlockHandler {
-  if block_handlers.len() <= block.id as usize {
+  if BLOCK_HANDLERS.len() <= block.id as usize {
     panic!("unexpected block id: {}", block.id );
   }
-  return block_handlers[block.id as usize];
+  return BLOCK_HANDLERS[block.id as usize];
 }
