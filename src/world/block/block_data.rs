@@ -3,6 +3,6 @@ use crate::utils::position::Position;
 use super::Block;
 
 pub struct BlockData {
-    block: Block,
-    position: Position,
+    pub block: Block,
+    pub in_chunk_position: Position,
 }

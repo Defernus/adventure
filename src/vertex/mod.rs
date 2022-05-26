@@ -6,7 +6,7 @@ pub struct Vertex {
 }
 
 impl Vertex {
-    pub fn getDescription<'a>() -> wgpu::VertexBufferLayout<'a> {
+    pub fn get_description<'a>() -> wgpu::VertexBufferLayout<'a> {
         wgpu::VertexBufferLayout {
             array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
             step_mode: wgpu::VertexStepMode::Vertex,

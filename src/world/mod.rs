@@ -6,7 +6,7 @@ use crate::{utils::{
     position::Position,
 }, vertex::Vertex};
 
-use self::{chunk::Chunk};
+use self::{chunk::Chunk, block::block_handlers::load_block_handlers};
 
 pub mod block;
 pub mod chunk;
@@ -34,7 +34,7 @@ impl World {
                 module: &shader,
                 entry_point: "vs_main",
                 buffers: &[
-                    Vertex::getDescription(),
+                    Vertex::get_description(),
                 ],
             },
             fragment: Some(wgpu::FragmentState {
@@ -63,6 +63,8 @@ impl World {
             },
             multiview: None,
         });
+
+        load_block_handlers();
 
         let mut chunks = BTreeMap::new();
         let chunk_pos = Position { x: 0, y: 0, z: 0 };
