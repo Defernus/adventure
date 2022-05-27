@@ -1,3 +1,6 @@
+use strum_macros::EnumIter;
+
+#[derive(EnumIter, Clone)]
 pub enum Direction {
     Up = 0,
     Down = 1,

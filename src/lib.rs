@@ -5,14 +5,20 @@ use winit::{
 };
 
 pub mod app_state;
-pub mod utils;
-pub mod world;
-pub mod vertex;
 pub mod camera;
 pub mod sun;
+#[cfg(test)]
+pub mod tests;
 pub mod texture;
+pub mod utils;
+pub mod vertex;
+pub mod world;
 
-fn handle_input(event: &WindowEvent, state: &mut app_state::GameState, control_flow: &mut ControlFlow) {
+fn handle_input(
+    event: &WindowEvent,
+    state: &mut app_state::GameState,
+    control_flow: &mut ControlFlow,
+) {
     if state.input(event) {
         return;
     }

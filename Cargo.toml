@@ -13,5 +13,7 @@ cfg-if = "1"
 cgmath = "0.18"
 noise = "0.7"
 chrono = "0.4"
+strum = "0.24"
+strum_macros = "0.24"
 bytemuck = { version = "1.9.1", features = [ "derive" ] }
 

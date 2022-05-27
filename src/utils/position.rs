@@ -1,10 +1,29 @@
 use std::cmp::Ordering;
 
-#[derive(Clone, Eq)]
+use super::direction::Direction;
+
+#[derive(Clone, Copy, Eq, Debug)]
 pub struct Position {
     pub x: i64,
     pub y: i64,
     pub z: i64,
+}
+
+impl Position {
+    pub fn new(x: i64, y: i64, z: i64) -> Self {
+        return Position { x, y, z };
+    }
+
+    pub fn get_neighbor(self: &Self, dir: Direction) -> Position {
+        match dir {
+            Direction::East => Position::new(self.x + 1, self.y, self.z),
+            Direction::West => Position::new(self.x - 1, self.y, self.z),
+            Direction::Up => Position::new(self.x, self.y + 1, self.z),
+            Direction::Down => Position::new(self.x, self.y - 1, self.z),
+            Direction::North => Position::new(self.x, self.y, self.z + 1),
+            Direction::South => Position::new(self.x, self.y, self.z - 1),
+        }
+    }
 }
 
 impl Ord for Position {

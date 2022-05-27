@@ -1,7 +1,7 @@
 use std::iter;
 use winit::{event::WindowEvent, window::Window};
 
-use crate::{world::World, texture};
+use crate::{texture, world::World};
 
 pub struct GameState {
     surface: wgpu::Surface,
@@ -51,7 +51,8 @@ impl GameState {
 
         surface.configure(&device, &config);
 
-        let depth_texture = texture::Texture::create_depth_texture(&device, &config, "depth_texture");
+        let depth_texture =
+            texture::Texture::create_depth_texture(&device, &config, "depth_texture");
 
         Self {
             world: World::new(&device, &config),
@@ -120,7 +121,8 @@ impl GameState {
                         store: true,
                     }),
                     stencil_ops: None,
-                }),            });
+                }),
+            });
             self.world.draw(&mut render_pass);
         }
 
