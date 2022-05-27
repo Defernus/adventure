@@ -1,8 +1,5 @@
 use crate::{
-    utils::{
-        direction::Direction,
-        position::Position,
-    },
+    utils::{direction::Direction, position::Position},
     vertex::Vertex,
 };
 
@@ -212,6 +209,5 @@ pub fn append_face(vertex: &mut Vec<Vertex>, pos: Position, color: [f32; 3], dir
                 color,
             });
         }
-        _ => {}
     }
 }

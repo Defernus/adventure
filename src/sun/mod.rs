@@ -9,7 +9,7 @@ pub struct Sun {
 
 impl Sun {
     pub fn new(device: &wgpu::Device) -> Self {
-        let mut uniform = SunUniform::new();
+        let uniform = SunUniform::new();
 
         let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Sun Buffer"),

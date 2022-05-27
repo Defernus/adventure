@@ -8,6 +8,7 @@ pub mod helpers;
 pub mod regular_block;
 
 pub trait IBlockHandler {
+    fn get_name(self: &Self, block_data: BlockData) -> String;
     fn is_solid(self: &Self, block_data: BlockData) -> bool;
     fn is_face_solid(self: &Self, block_data: BlockData, face: Direction) -> bool;
 
@@ -22,8 +23,8 @@ pub trait IBlockHandler {
 }
 
 const BLOCK_HANDLERS: [&'static dyn IBlockHandler; 2] = [
-    &RegularBlock::new(false, "air", None),
-    &RegularBlock::new(true, "stone", Some([0.5, 0.5, 0.5])),
+    &RegularBlock::new(false, "block.air", None),
+    &RegularBlock::new(true, "block.stone", Some([0.5, 0.5, 0.5])),
 ];
 
 pub fn load_block_handlers() {}

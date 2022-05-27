@@ -39,6 +39,10 @@ impl RegularBlock {
 }
 
 impl IBlockHandler for RegularBlock {
+    fn get_name(self: &Self, _block_data: BlockData) -> String {
+        return self.name.to_string();
+    }
+
     fn is_solid(self: &Self, _block_data: BlockData) -> bool {
         return self.is_solid;
     }
@@ -49,7 +53,7 @@ impl IBlockHandler for RegularBlock {
     fn is_east_face_solid(self: &Self, _block_data: BlockData) -> bool {
         return self.is_solid;
     }
-    fn is_face_solid(self: &Self, _block_data: BlockData, face: Direction) -> bool {
+    fn is_face_solid(self: &Self, _block_data: BlockData, _face: Direction) -> bool {
         return self.is_solid;
     }
     fn is_north_face_solid(self: &Self, _block_data: BlockData) -> bool {

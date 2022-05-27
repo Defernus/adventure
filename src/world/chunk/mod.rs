@@ -12,7 +12,6 @@ pub const CHUNK_SIZE: usize = 16;
 pub const CHUNK_VOLUME: usize = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE;
 
 pub struct Chunk {
-    biome: i32,
     pos: Position,
     vertex_data: Option<ChunkVertex>,
     blocks: [Block; CHUNK_VOLUME],
@@ -26,7 +25,6 @@ struct ChunkVertex {
 impl Chunk {
     pub fn new(pos: Position) -> Self {
         Self {
-            biome: 0,
             pos: pos,
             blocks: [Block { id: 0 }; CHUNK_VOLUME],
             vertex_data: None,
