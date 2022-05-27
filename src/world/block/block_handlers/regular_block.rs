@@ -1,6 +1,6 @@
 use crate::{vertex::Vertex, world::{block::{block_data::BlockData, Block}, chunk::CHUNK_VOLUME}, utils::direction::Direction};
 
-use super::IBlockHandler;
+use super::{IBlockHandler, helpers::append_face};
 
 pub struct RegularBlock {
     is_solid: bool,
@@ -48,18 +48,14 @@ impl IBlockHandler for RegularBlock {
             },
             Some(color) => {
                 let pos = block_data.in_chunk_position;
-                let x = pos.x as f32;
-                let y = pos.y as f32;
-                let z = pos.z as f32;
-                // println!("block {} {} {}", x, y, z);
-                
-                vertex.push(Vertex { position: [x, y, z], color });
-                vertex.push(Vertex { position: [x + 1., y, z], color });
-                vertex.push(Vertex { position: [x + 1., y + 1., z], color });
-                
-                vertex.push(Vertex { position: [x, y, z], color });
-                vertex.push(Vertex { position: [x + 1., y + 1., z], color });
-                vertex.push(Vertex { position: [x, y + 1., z], color });
+                append_face::append_face(vertex, pos.clone(), color, Direction::South);
+                append_face::append_face(vertex, pos.clone(), color, Direction::North);
+
+                append_face::append_face(vertex, pos.clone(), color, Direction::East);
+                append_face::append_face(vertex, pos.clone(), color, Direction::West);
+
+                append_face::append_face(vertex, pos.clone(), color, Direction::Up);
+                append_face::append_face(vertex, pos.clone(), color, Direction::Down);
             }
         }
     }

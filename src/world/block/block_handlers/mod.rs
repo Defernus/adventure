@@ -5,6 +5,7 @@ use self::regular_block::RegularBlock;
 use super::{Block, block_data::BlockData};
 
 pub mod regular_block;
+pub mod helpers;
 
 pub trait IBlockHandler {
     fn is_solid(self: &Self, block_data: BlockData) -> bool;

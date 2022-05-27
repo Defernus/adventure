@@ -1,7 +1,7 @@
 use std::iter;
 use winit::{event::WindowEvent, window::Window};
 
-use crate::{world::World};
+use crate::{world::World, texture};
 
 pub struct GameState {
     surface: wgpu::Surface,
@@ -9,6 +9,7 @@ pub struct GameState {
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
     size: winit::dpi::PhysicalSize<u32>,
+    depth_texture: texture::Texture,
 
     world: World,
 }
@@ -47,11 +48,14 @@ impl GameState {
             height: size.height,
             present_mode: wgpu::PresentMode::Fifo,
         };
+
         surface.configure(&device, &config);
+
+        let depth_texture = texture::Texture::create_depth_texture(&device, &config, "depth_texture");
 
         Self {
             world: World::new(&device, &config),
-
+            depth_texture,
             surface,
             device,
             queue,
@@ -79,7 +83,7 @@ impl GameState {
     }
 
     pub fn update(&mut self) {
-        self.world.update();
+        self.world.update(&self.queue);
     }
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
@@ -109,8 +113,14 @@ impl GameState {
                         store: true,
                     },
                 }],
-                depth_stencil_attachment: None,
-            });
+                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                    view: &self.depth_texture.view,
+                    depth_ops: Some(wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(1.0),
+                        store: true,
+                    }),
+                    stencil_ops: None,
+                }),            });
             self.world.draw(&mut render_pass);
         }
 

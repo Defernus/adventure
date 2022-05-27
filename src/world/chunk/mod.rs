@@ -40,9 +40,13 @@ impl Chunk {
         println!("generating chung {}, {}, {}", pos.x, pos.y, pos.z);
         let perlin = noise::Perlin::new();
         let mut blocks = [Block { id: 0 }; CHUNK_VOLUME];
+        let noise_scale = 0.1;
         for i in 0..CHUNK_VOLUME {
-            let noise_v = perlin.get([i as f64 * 0.1, 0., 0.]) * 2.;
-            blocks[i].id = (noise_v) as BlockId;
+            let x = (i % CHUNK_SIZE) as f64;
+            let y = ((i / CHUNK_SIZE) % CHUNK_SIZE) as f64;
+            let z = (i / CHUNK_SIZE / CHUNK_SIZE) as f64;
+            let noise_v = perlin.get([x * noise_scale, y * noise_scale, z * noise_scale]);
+            blocks[i].id = if noise_v > 0.1 { 0 } else { 1 };
         }
         blocks[0].id = 1;
 

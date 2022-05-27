@@ -1,12 +1,12 @@
-use std::collections::{self, BTreeMap};
+use std::{collections::{self, BTreeMap}, time::{SystemTime, UNIX_EPOCH}};
 
 use wgpu::{ Device, RenderPipeline, SurfaceConfiguration, RenderPass, include_wgsl, util::DeviceExt};
 
 use crate::{utils::{
     position::Position,
-}, vertex::Vertex, camera::{Camera, CameraUniform}};
+}, vertex::Vertex, camera::{Camera, CameraState}, sun::Sun, texture};
 
-use self::{chunk::Chunk, block::block_handlers::load_block_handlers};
+use self::{chunk::{Chunk, CHUNK_SIZE}, block::block_handlers::load_block_handlers};
 
 pub mod block;
 pub mod chunk;
@@ -15,21 +15,27 @@ pub struct World {
     chunks: collections::BTreeMap<Position, Chunk>,
     render_pipeline: RenderPipeline,
     camera: Camera,
+    sun: Sun,
 }
 
 impl World {
     pub fn new(device: &Device, config: &SurfaceConfiguration) -> Self {
         let shader = device.create_shader_module(&include_wgsl!("shaders/main.wgsl"));
 
-        let camera = Camera::new(
+        let mut sun = Sun::new(&device);
+
+        let mut camera = Camera::new(
             &device,
-            (0.0, 1.0, 2.0).into(),
-            (0.0, 0.0, 0.0).into(),
-            cgmath::Vector3::unit_y(),
-            config.width as f32 / config.height as f32,
-            45.0,
-            0.1,
-            100.0,
+            CameraState {
+                eye: (0.0, 1.0, 2.0).into(),
+                // target: (0., 0., 0.).into(),
+                target: (CHUNK_SIZE as f32 / 2., CHUNK_SIZE as f32 / 2., CHUNK_SIZE as f32 / 2.).into(),
+                up: cgmath::Vector3::unit_y(),
+                aspect: config.width as f32 / config.height as f32,
+                fov_y: 45.0,
+                z_near: 0.1,
+                z_far: 100.0, 
+            },
         );
 
         let render_pipeline_layout =
@@ -37,6 +43,7 @@ impl World {
                 label: Some("Render Pipeline Layout"),
                 bind_group_layouts: &[
                     camera.get_bind_group_layout(),
+                    sun.get_bind_group_layout(),
                 ],
                 push_constant_ranges: &[],
             });
@@ -69,7 +76,13 @@ impl World {
                 unclipped_depth: false,
                 conservative: false,
             },
-            depth_stencil: None,
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: texture::Texture::DEPTH_FORMAT,
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::Less, // 1.
+                stencil: wgpu::StencilState::default(), // 2.
+                bias: wgpu::DepthBiasState::default(),
+            }),
             multisample: wgpu::MultisampleState {
                 count: 1,
                 mask: !0,
@@ -84,18 +97,40 @@ impl World {
         let chunk_pos = Position { x: 0, y: 0, z: 0 };
         chunks.insert(chunk_pos.clone(), Chunk::generate(chunk_pos.clone(), device));
 
-        return World { chunks, render_pipeline, camera };
+        return World { sun, chunks, render_pipeline, camera };
     }
 
-    pub fn update(self: &mut Self) {
+    pub fn update(self: &mut Self, queue: &wgpu::Queue) {
         self.chunks.iter_mut().for_each(|(_pos, chunk)| {
             chunk.update();
-        })
+        });
+
+        let start = SystemTime::now();
+        let since_the_epoch = start
+            .duration_since(UNIX_EPOCH)
+            .expect("Time went backwards");
+
+        let t = since_the_epoch.as_millis() - 1653596661209;
+        let t = t as f32 / 1000.;
+
+        let r: f32 = CHUNK_SIZE as f32 * 2.;
+        let target = self.camera.state.target;
+        self.camera.state.eye = (
+            target.x + t.cos() * r,
+            target.y + t.cos() * r,
+            target.z + t.sin() * r,
+        ).into();
+
+        self.camera.update_uniform(queue);
+        self.sun.update_uniform(queue);
     }
 
     pub fn draw<'a>(self: &'a Self, render_pass: &mut RenderPass<'a>) {
         render_pass.set_pipeline(&self.render_pipeline);
+
         render_pass.set_bind_group(0, self.camera.get_bind_group(), &[]);
+        render_pass.set_bind_group(1, self.sun.get_bind_group(), &[]);
+
         for (_pos, chunk) in self.chunks.iter() {
             chunk.draw(render_pass);
         }

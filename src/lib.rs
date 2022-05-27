@@ -9,6 +9,8 @@ pub mod utils;
 pub mod world;
 pub mod vertex;
 pub mod camera;
+pub mod sun;
+pub mod texture;
 
 fn handle_input(event: &WindowEvent, state: &mut app_state::GameState, control_flow: &mut ControlFlow) {
     if state.input(event) {
