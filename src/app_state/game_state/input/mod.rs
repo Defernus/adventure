@@ -17,6 +17,7 @@ pub enum InputKey {
     MoveRight,
     MoveUp,
     MoveDown,
+    FastMove,
     CursorFree,
 }
 
@@ -142,9 +143,10 @@ impl GameInput {
             VirtualKeyCode::A => self.handle_key_action(InputKey::MoveLeft, pressed),
             VirtualKeyCode::S => self.handle_key_action(InputKey::MoveBack, pressed),
             VirtualKeyCode::D => self.handle_key_action(InputKey::MoveRight, pressed),
-            VirtualKeyCode::LShift => self.handle_key_action(InputKey::MoveDown, pressed),
+            VirtualKeyCode::LControl => self.handle_key_action(InputKey::MoveDown, pressed),
             VirtualKeyCode::Space => self.handle_key_action(InputKey::MoveUp, pressed),
             VirtualKeyCode::Q => self.handle_key_action(InputKey::CursorFree, pressed),
+            VirtualKeyCode::LShift => self.handle_key_action(InputKey::FastMove, pressed),
             _ => false,
         }
     }

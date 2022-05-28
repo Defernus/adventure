@@ -14,6 +14,7 @@ pub mod uniform;
 
 const SPEED: f32 = 10.0;
 const SENSITIVITY: f32 = 5.0;
+const FAST_MOVE_FACTOR: f32 = 5.;
 
 pub struct Camera {
     pub state: CameraState,
@@ -109,24 +110,28 @@ impl Camera {
 
     pub fn update(&mut self, game_state: &mut GameSate) {
         let dt = game_state.game_time.get_delta_time();
-        let offset = dt * SPEED;
+        let mut move_offset = dt * SPEED;
+        if game_state.game_input.is_pressed(InputKey::FastMove) {
+            move_offset *= FAST_MOVE_FACTOR;
+        }
+
         if game_state.game_input.is_pressed(InputKey::MoveFront) {
-            self.translate(Vec3::unit_z() * offset);
+            self.translate(Vec3::unit_z() * move_offset);
         }
         if game_state.game_input.is_pressed(InputKey::MoveLeft) {
-            self.translate(-Vec3::unit_x() * offset);
+            self.translate(-Vec3::unit_x() * move_offset);
         }
         if game_state.game_input.is_pressed(InputKey::MoveBack) {
-            self.translate(-Vec3::unit_z() * offset);
+            self.translate(-Vec3::unit_z() * move_offset);
         }
         if game_state.game_input.is_pressed(InputKey::MoveRight) {
-            self.translate(Vec3::unit_x() * offset);
+            self.translate(Vec3::unit_x() * move_offset);
         }
         if game_state.game_input.is_pressed(InputKey::MoveUp) {
-            self.translate_abs(Vec3::unit_y() * offset);
+            self.translate_abs(Vec3::unit_y() * move_offset);
         }
         if game_state.game_input.is_pressed(InputKey::MoveDown) {
-            self.translate_abs(-Vec3::unit_y() * offset);
+            self.translate_abs(-Vec3::unit_y() * move_offset);
         }
 
         match game_state.game_input.get_input_state(InputKey::CursorFree) {
