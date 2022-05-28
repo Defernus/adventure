@@ -26,6 +26,7 @@ pub struct World {
     render_pipeline: RenderPipeline,
     pub camera: Camera,
     max_chunks: usize,
+    max_chunk_dist: f32,
     sun: Sun,
 }
 
@@ -114,6 +115,7 @@ impl World {
         chunks.insert(chunk_pos.clone(), first_chunk);
 
         return World {
+            max_chunk_dist: 64.,
             sun,
             chunks,
             max_chunks: 32,
@@ -122,7 +124,7 @@ impl World {
         };
     }
 
-    pub fn load_chunk(&mut self, device: &Device, _game_state: &mut GameSate) -> bool {
+    fn load_chunk(&mut self, device: &Device, _game_state: &mut GameSate) -> bool {
         if self.chunks.len() < self.max_chunks {
             let camera_pos = self.camera.state.eye;
             let new_pos = Position::new(
@@ -146,6 +148,31 @@ impl World {
         return false;
     }
 
+    fn get_chunk_to_unload(&mut self) -> Option<Position> {
+        for (pos, _chunk) in self.chunks.iter() {
+            let chunk_pos = Vec3::new(pos.x as f32, pos.y as f32, pos.z as f32) * CHUNK_SIZE as f32;
+            let dist = (chunk_pos - self.camera.state.eye).length();
+            if dist > self.max_chunk_dist {
+                println!("chunk at {:?} too far and will be unloaded", pos);
+                return Some(pos.clone());
+            }
+        }
+        return None;
+    }
+
+    fn unload_chunk(&mut self, _game_state: &mut GameSate) -> bool {
+        let chunk_to_unload = self.get_chunk_to_unload();
+        match chunk_to_unload {
+            Some(pos) => {
+                self.chunks.remove(&pos);
+                return true;
+            }
+            None => {
+                return false;
+            }
+        }
+    }
+
     pub fn update(&mut self, queue: &wgpu::Queue, device: &Device, game_state: &mut GameSate) {
         self.load_chunk(device, game_state);
 
@@ -155,6 +182,8 @@ impl World {
 
         self.camera.update_uniform(queue);
         self.sun.update_uniform(queue);
+
+        self.unload_chunk(game_state);
     }
 
     pub fn draw<'a>(self: &'a Self, render_pass: &mut RenderPass<'a>) {
