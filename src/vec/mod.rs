@@ -187,6 +187,30 @@ impl<T> Vec3<T>
 where
     T: Float,
 {
+    pub fn unit_x() -> Self {
+        Self {
+            x: T::from::<f32>(1.).unwrap(),
+            y: T::from::<f32>(0.).unwrap(),
+            z: T::from::<f32>(0.).unwrap(),
+        }
+    }
+
+    pub fn unit_y() -> Self {
+        Self {
+            x: T::from::<f32>(0.).unwrap(),
+            y: T::from::<f32>(1.).unwrap(),
+            z: T::from::<f32>(0.).unwrap(),
+        }
+    }
+
+    pub fn unit_z() -> Self {
+        Self {
+            x: T::from::<f32>(0.).unwrap(),
+            y: T::from::<f32>(0.).unwrap(),
+            z: T::from::<f32>(1.).unwrap(),
+        }
+    }
+
     pub fn length(&self) -> T {
         self.sq_length().sqrt()
     }

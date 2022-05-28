@@ -15,12 +15,12 @@ pub mod vec;
 pub mod vertex;
 pub mod world;
 
-fn handle_input(
+fn handle_window_input(
     event: &WindowEvent,
     state: &mut app_state::AppState,
     control_flow: &mut ControlFlow,
 ) {
-    if state.input(event) {
+    if state.window_input(event) {
         return;
     }
 
@@ -70,7 +70,10 @@ pub async fn run() {
             ref event,
             window_id,
         } if window_id == window.id() => {
-            handle_input(event, &mut state, control_flow);
+            handle_window_input(event, &mut state, control_flow);
+        }
+        Event::DeviceEvent { ref event, .. } => {
+            state.device_input(event);
         }
         Event::RedrawRequested(window_id) if window_id == window.id() => {
             handle_redraw(&mut state, control_flow, &window);

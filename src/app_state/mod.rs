@@ -1,5 +1,9 @@
 use std::iter;
-use winit::{event::WindowEvent, window::Window};
+use winit::{
+    dpi::PhysicalPosition,
+    event::{DeviceEvent, WindowEvent},
+    window::Window,
+};
 
 use crate::{texture, world::World};
 
@@ -60,8 +64,13 @@ impl AppState {
         let depth_texture =
             texture::Texture::create_depth_texture(&device, &config, "depth_texture");
 
+        let size = window.inner_size();
+        window
+            .set_cursor_position(PhysicalPosition::new(size.width / 2, size.height / 2))
+            .expect("failed to set cursor position");
+
         Self {
-            game_state: GameSate::new(window),
+            game_state: GameSate::new(),
             depth_texture,
             world: World::new(window, &device, &config),
             surface,
@@ -85,12 +94,16 @@ impl AppState {
         }
     }
 
-    pub fn input(&mut self, event: &WindowEvent) -> bool {
-        self.game_state.input(event)
+    pub fn device_input(&mut self, event: &DeviceEvent) -> bool {
+        self.game_state.device_input(event)
+    }
+
+    pub fn window_input(&mut self, event: &WindowEvent) -> bool {
+        self.game_state.window_input(event)
     }
 
     pub fn update(&mut self, window: &Window) {
-        self.game_state.pre_update();
+        self.game_state.pre_update(window);
 
         self.world.camera.update(&mut self.game_state);
         self.world.update(&self.queue, &mut self.game_state);

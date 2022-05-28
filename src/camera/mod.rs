@@ -13,7 +13,7 @@ pub mod state;
 pub mod uniform;
 
 const SPEED: f32 = 10.0;
-const SENSITIVITY: f32 = 1.0;
+const SENSITIVITY: f32 = 5.0;
 
 pub struct Camera {
     pub state: CameraState,
@@ -83,42 +83,50 @@ impl Camera {
         queue.write_buffer(&self.buffer, 0, bytemuck::cast_slice(&[self.uniform]));
     }
 
-    pub fn translate(&mut self, offset: Vec3<f32>) {
-        self.state.target += offset;
+    pub fn translate_abs(&mut self, offset: Vec3<f32>) {
         self.state.eye += offset;
+        self.state.target += offset;
+    }
+
+    pub fn translate(&mut self, offset: Vec3<f32>) {
+        let front = self.state.target - self.state.eye;
+        let right = front.clone().cross(self.state.up.clone()).normalize();
+        let top = right.cross(front);
+
+        let abs_offset = right * offset.x + top * offset.y + front * offset.z;
+
+        self.translate_abs(abs_offset);
     }
 
     pub fn rotate(&mut self, x: f32, y: f32) {
-        let relative_target = self.state.target - self.state.eye;
-        let relative_target = relative_target.rotate(Vec3::new(0.0, 1.0, 0.0), -x);
-        let right = relative_target
-            .clone()
-            .cross(self.state.up.clone())
-            .normalize();
-        let relative_target = relative_target.rotate(right, y);
+        let front = (self.state.target - self.state.eye).normalize();
+        let front = front.rotate(Vec3::unit_y(), -x);
+        let right = front.clone().cross(self.state.up.clone()).normalize();
+        let front = front.rotate(right, y);
 
-        self.state.target = relative_target + self.state.eye;
+        self.state.target = front + self.state.eye;
     }
 
     pub fn update(&mut self, game_state: &mut GameSate) {
         let dt = game_state.game_time.get_delta_time();
+        let offset = dt * SPEED;
         if game_state.game_input.is_pressed(InputKey::MoveFront) {
-            self.translate((0.0, 0.0, SPEED * dt).into());
+            self.translate(Vec3::unit_z() * offset);
         }
         if game_state.game_input.is_pressed(InputKey::MoveLeft) {
-            self.translate((SPEED * dt, 0.0, 0.0).into());
+            self.translate(-Vec3::unit_x() * offset);
         }
         if game_state.game_input.is_pressed(InputKey::MoveBack) {
-            self.translate((0.0, 0.0, -SPEED * dt).into());
+            self.translate(-Vec3::unit_z() * offset);
         }
         if game_state.game_input.is_pressed(InputKey::MoveRight) {
-            self.translate((-SPEED * dt, 0.0, 0.0).into());
+            self.translate(Vec3::unit_x() * offset);
         }
         if game_state.game_input.is_pressed(InputKey::MoveUp) {
-            self.translate((0.0, SPEED * dt, 0.0).into());
+            self.translate_abs(Vec3::unit_y() * offset);
         }
         if game_state.game_input.is_pressed(InputKey::MoveDown) {
-            self.translate((0.0, -SPEED * dt, 0.0).into());
+            self.translate_abs(-Vec3::unit_y() * offset);
         }
 
         match game_state.game_input.get_input_state(InputKey::CursorFree) {

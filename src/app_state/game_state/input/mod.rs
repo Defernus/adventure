@@ -1,7 +1,7 @@
 use strum::EnumCount;
 use strum_macros::{EnumCount as EnumCountMacro, EnumIter};
 use winit::{
-    event::{ElementState, KeyboardInput, VirtualKeyCode, WindowEvent},
+    event::{DeviceEvent, ElementState, KeyboardInput, VirtualKeyCode, WindowEvent},
     window::Window,
 };
 
@@ -38,15 +38,24 @@ pub struct GameInput {
 }
 
 impl GameInput {
-    pub(super) fn new(window: &Window) -> Self {
+    pub(super) fn new() -> Self {
         Self {
             input_data: [InputState::Released; InputKey::COUNT],
-            mouse: MouseInput::new(window, true),
+            mouse: MouseInput::new(true),
             is_in_focus: true,
         }
     }
 
-    pub(super) fn input(&mut self, event: &WindowEvent) -> bool {
+    pub(super) fn device_input(&mut self, event: &DeviceEvent) -> bool {
+        match event {
+            DeviceEvent::MouseMotion { delta: (x, y) } => {
+                self.mouse.handle_motion(*x as f32, *y as f32)
+            }
+            _ => false,
+        }
+    }
+
+    pub(super) fn window_input(&mut self, event: &WindowEvent) -> bool {
         let result = match event {
             WindowEvent::KeyboardInput {
                 input:
@@ -71,6 +80,10 @@ impl GameInput {
             _ => false,
         };
         return result;
+    }
+
+    pub(super) fn pre_update(&mut self, window: &Window) {
+        self.mouse.pre_update(window);
     }
 
     pub(super) fn post_update(&mut self) {
