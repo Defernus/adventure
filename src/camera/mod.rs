@@ -136,11 +136,9 @@ impl Camera {
 
         match game_state.game_input.get_input_state(InputKey::CursorFree) {
             InputState::JustPressed => {
-                println!("show");
                 game_state.show_cursor();
             }
             InputState::JustReleased => {
-                println!("hide");
                 game_state.hide_cursor();
             }
             _ => {}
