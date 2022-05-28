@@ -14,6 +14,7 @@ impl MouseInput {
             y: 0.,
         }
     }
+
     pub(super) fn post_update(&mut self) {
         self.prev_x = self.x;
         self.prev_y = self.y;
@@ -28,5 +29,9 @@ impl MouseInput {
 
     pub fn get_mouse_pos(&self) -> (f32, f32) {
         (self.x, self.y)
+    }
+
+    pub fn get_delta(&self) -> (f32, f32) {
+        (self.x - self.prev_x, self.y - self.prev_y)
     }
 }

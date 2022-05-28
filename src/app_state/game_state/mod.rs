@@ -37,10 +37,14 @@ impl GameSate {
         let window_size = window.inner_size();
 
         if self.hide_cursor {
-            window.set_cursor_position(LogicalPosition::new(
+            let result = window.set_cursor_position(LogicalPosition::new(
                 window_size.width / 4,
                 window_size.height / 4,
             ));
+            match result {
+                Err(e) => panic!("failed to set cursor position {}", e),
+                _ => {}
+            }
         }
         window.set_cursor_visible(!self.hide_cursor);
     }
