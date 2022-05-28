@@ -16,7 +16,7 @@ pub mod world;
 
 fn handle_input(
     event: &WindowEvent,
-    state: &mut app_state::GameState,
+    state: &mut app_state::AppState,
     control_flow: &mut ControlFlow,
 ) {
     if state.input(event) {
@@ -44,7 +44,7 @@ fn handle_input(
     }
 }
 
-fn handle_redraw(state: &mut app_state::GameState, control_flow: &mut ControlFlow) {
+fn handle_redraw(state: &mut app_state::AppState, control_flow: &mut ControlFlow) {
     state.update();
     match state.render() {
         Ok(_) => {}
@@ -62,7 +62,7 @@ pub async fn run() {
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new().build(&event_loop).unwrap();
 
-    let mut state = app_state::GameState::new(&window).await;
+    let mut state = app_state::AppState::new(&window).await;
 
     event_loop.run(move |event, _, control_flow| match event {
         Event::WindowEvent {

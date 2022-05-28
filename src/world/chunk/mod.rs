@@ -31,7 +31,7 @@ impl Chunk {
         }
     }
 
-    fn generate_vertex(self: &mut Self) -> Vec<Vertex> {
+    fn generate_vertex(&mut self) -> Vec<Vertex> {
         let mut vertex: Vec<Vertex> = Vec::new();
         for i in 0..CHUNK_VOLUME {
             let handler = get_block_handler(self.blocks[i]);
@@ -50,7 +50,7 @@ impl Chunk {
         return vertex;
     }
 
-    pub fn generate(self: &mut Self, device: &Device) {
+    pub fn generate(&mut self, device: &Device) {
         println!("generating chung {:?}", self.pos);
 
         let simplex = noise::OpenSimplex::new();
@@ -62,7 +62,6 @@ impl Chunk {
             let noise_v = simplex.get([x * noise_scale, y * noise_scale, z * noise_scale]);
             self.blocks[i].id = if noise_v > 0.1 { 0 } else { 1 };
         }
-        self.blocks[0].id = 1;
 
         let vertex = self.generate_vertex();
 
@@ -87,7 +86,7 @@ impl Chunk {
         );
     }
 
-    pub fn pos_to_relative(self: &Self, pos: Position) -> Position {
+    pub fn pos_to_relative(&self, pos: Position) -> Position {
         return Position::new(
             pos.x - self.pos.x * CHUNK_SIZE as i64,
             pos.y - self.pos.y * CHUNK_SIZE as i64,
@@ -95,7 +94,7 @@ impl Chunk {
         );
     }
 
-    pub fn set_block(self: &mut Self, in_chunk_position: Position, block: Block) -> bool {
+    pub fn set_block(&mut self, in_chunk_position: Position, block: Block) -> bool {
         match Self::pos_to_index(in_chunk_position) {
             Some(index) => {
                 self.blocks[index] = block;
@@ -107,7 +106,7 @@ impl Chunk {
         }
     }
 
-    pub fn get_block(self: &Self, in_chunk_position: Position) -> Option<BlockData> {
+    pub fn get_block(&self, in_chunk_position: Position) -> Option<BlockData> {
         match Self::pos_to_index(in_chunk_position.clone()) {
             Some(index) => {
                 let block = self.blocks[index];
@@ -123,7 +122,7 @@ impl Chunk {
         }
     }
 
-    pub fn set_pos(self: &Self, in_chunk_position: Position) -> Option<BlockData> {
+    pub fn set_pos(&self, in_chunk_position: Position) -> Option<BlockData> {
         match Self::pos_to_index(in_chunk_position.clone()) {
             Some(index) => {
                 let block = self.blocks[index];
@@ -148,7 +147,7 @@ impl Chunk {
             && pos.z < CHUNK_SIZE as i64;
     }
 
-    pub fn get_neighbor(self: &Self, pos: Position, dir: Direction) -> Option<BlockData> {
+    pub fn get_neighbor(&self, pos: Position, dir: Direction) -> Option<BlockData> {
         let result_pos = pos.get_neighbor(dir);
 
         match Self::pos_to_index(result_pos.clone()) {
@@ -165,7 +164,7 @@ impl Chunk {
         }
     }
 
-    pub fn update(self: &Self) {}
+    pub fn update(&self) {}
 
     pub fn draw<'a>(self: &'a Self, render_pass: &mut RenderPass<'a>) {
         match self.vertex_data.as_ref() {

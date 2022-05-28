@@ -39,37 +39,37 @@ impl RegularBlock {
 }
 
 impl IBlockHandler for RegularBlock {
-    fn get_name(self: &Self, _block_data: BlockData) -> String {
+    fn get_name(&self, _block_data: BlockData) -> String {
         return self.name.to_string();
     }
 
-    fn is_solid(self: &Self, _block_data: BlockData) -> bool {
+    fn is_solid(&self, _block_data: BlockData) -> bool {
         return self.is_solid;
     }
 
-    fn is_bottom_face_solid(self: &Self, _block_data: BlockData) -> bool {
+    fn is_bottom_face_solid(&self, _block_data: BlockData) -> bool {
         return self.is_solid;
     }
-    fn is_east_face_solid(self: &Self, _block_data: BlockData) -> bool {
+    fn is_east_face_solid(&self, _block_data: BlockData) -> bool {
         return self.is_solid;
     }
-    fn is_face_solid(self: &Self, _block_data: BlockData, _face: Direction) -> bool {
+    fn is_face_solid(&self, _block_data: BlockData, _face: Direction) -> bool {
         return self.is_solid;
     }
-    fn is_north_face_solid(self: &Self, _block_data: BlockData) -> bool {
+    fn is_north_face_solid(&self, _block_data: BlockData) -> bool {
         return self.is_solid;
     }
-    fn is_south_face_solid(self: &Self, _block_data: BlockData) -> bool {
+    fn is_south_face_solid(&self, _block_data: BlockData) -> bool {
         return self.is_solid;
     }
-    fn is_top_face_solid(self: &Self, _block_data: BlockData) -> bool {
+    fn is_top_face_solid(&self, _block_data: BlockData) -> bool {
         return self.is_solid;
     }
-    fn is_west_face_solid(self: &Self, _block_data: BlockData) -> bool {
+    fn is_west_face_solid(&self, _block_data: BlockData) -> bool {
         return self.is_solid;
     }
 
-    fn update_vertex(self: &Self, block_data: BlockData, vertex: &mut Vec<crate::vertex::Vertex>) {
+    fn update_vertex(&self, block_data: BlockData, vertex: &mut Vec<crate::vertex::Vertex>) {
         match self.color {
             None => {
                 return;

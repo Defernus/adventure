@@ -3,7 +3,11 @@ use winit::{event::WindowEvent, window::Window};
 
 use crate::{texture, world::World};
 
-pub struct GameState {
+use self::game_state::GameSate;
+
+pub mod game_state;
+
+pub struct AppState {
     surface: wgpu::Surface,
     device: wgpu::Device,
     queue: wgpu::Queue,
@@ -11,10 +15,12 @@ pub struct GameState {
     size: winit::dpi::PhysicalSize<u32>,
     depth_texture: texture::Texture,
 
+    game_sate: GameSate,
+
     world: World,
 }
 
-impl GameState {
+impl AppState {
     pub async fn new(window: &Window) -> Self {
         let size = window.inner_size();
 
@@ -55,8 +61,9 @@ impl GameState {
             texture::Texture::create_depth_texture(&device, &config, "depth_texture");
 
         Self {
-            world: World::new(&device, &config),
+            game_sate: GameSate::new(),
             depth_texture,
+            world: World::new(&device, &config),
             surface,
             device,
             queue,
@@ -78,13 +85,17 @@ impl GameState {
         }
     }
 
-    #[allow(unused_variables)]
     pub fn input(&mut self, event: &WindowEvent) -> bool {
-        false
+        self.game_sate.input(event)
     }
 
     pub fn update(&mut self) {
-        self.world.update(&self.queue);
+        self.game_sate.pre_update();
+
+        self.world.camera.update(&self.game_sate);
+        self.world.update(&self.queue, &self.game_sate);
+
+        self.game_sate.post_update();
     }
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {

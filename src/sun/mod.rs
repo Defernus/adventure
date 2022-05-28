@@ -50,15 +50,15 @@ impl Sun {
         return result;
     }
 
-    pub fn get_bind_group(self: &Self) -> &wgpu::BindGroup {
+    pub fn get_bind_group(&self) -> &wgpu::BindGroup {
         return &self.bind_group;
     }
 
-    pub fn get_bind_group_layout(self: &Self) -> &wgpu::BindGroupLayout {
+    pub fn get_bind_group_layout(&self) -> &wgpu::BindGroupLayout {
         return &self.bind_group_layout;
     }
 
-    pub fn update_uniform(self: &mut Self, queue: &wgpu::Queue) {
+    pub fn update_uniform(&mut self, queue: &wgpu::Queue) {
         queue.write_buffer(&self.buffer, 0, bytemuck::cast_slice(&[self.uniform]));
     }
 }

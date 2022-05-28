@@ -14,7 +14,7 @@ impl Position {
         return Position { x, y, z };
     }
 
-    pub fn get_neighbor(self: &Self, dir: Direction) -> Position {
+    pub fn get_neighbor(&self, dir: Direction) -> Position {
         match dir {
             Direction::East => Position::new(self.x + 1, self.y, self.z),
             Direction::West => Position::new(self.x - 1, self.y, self.z),

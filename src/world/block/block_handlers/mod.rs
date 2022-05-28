@@ -8,18 +8,18 @@ pub mod helpers;
 pub mod regular_block;
 
 pub trait IBlockHandler {
-    fn get_name(self: &Self, block_data: BlockData) -> String;
-    fn is_solid(self: &Self, block_data: BlockData) -> bool;
-    fn is_face_solid(self: &Self, block_data: BlockData, face: Direction) -> bool;
+    fn get_name(&self, block_data: BlockData) -> String;
+    fn is_solid(&self, block_data: BlockData) -> bool;
+    fn is_face_solid(&self, block_data: BlockData, face: Direction) -> bool;
 
-    fn is_top_face_solid(self: &Self, block_data: BlockData) -> bool;
-    fn is_bottom_face_solid(self: &Self, block_data: BlockData) -> bool;
-    fn is_north_face_solid(self: &Self, block_data: BlockData) -> bool;
-    fn is_south_face_solid(self: &Self, block_data: BlockData) -> bool;
-    fn is_west_face_solid(self: &Self, block_data: BlockData) -> bool;
-    fn is_east_face_solid(self: &Self, block_data: BlockData) -> bool;
+    fn is_top_face_solid(&self, block_data: BlockData) -> bool;
+    fn is_bottom_face_solid(&self, block_data: BlockData) -> bool;
+    fn is_north_face_solid(&self, block_data: BlockData) -> bool;
+    fn is_south_face_solid(&self, block_data: BlockData) -> bool;
+    fn is_west_face_solid(&self, block_data: BlockData) -> bool;
+    fn is_east_face_solid(&self, block_data: BlockData) -> bool;
 
-    fn update_vertex(self: &Self, block_data: BlockData, vertex: &mut Vec<Vertex>);
+    fn update_vertex(&self, block_data: BlockData, vertex: &mut Vec<Vertex>);
 }
 
 const BLOCK_HANDLERS: [&'static dyn IBlockHandler; 2] = [

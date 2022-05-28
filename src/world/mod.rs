@@ -1,11 +1,9 @@
-use std::{
-    collections::{self, BTreeMap},
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::collections::{self, BTreeMap};
 
 use wgpu::{include_wgsl, Device, RenderPass, RenderPipeline, SurfaceConfiguration};
 
 use crate::{
+    app_state::game_state::GameSate,
     camera::{Camera, CameraState},
     sun::Sun,
     texture,
@@ -24,7 +22,7 @@ pub mod chunk;
 pub struct World {
     chunks: collections::BTreeMap<Position, Chunk>,
     render_pipeline: RenderPipeline,
-    camera: Camera,
+    pub camera: Camera,
     sun: Sun,
 }
 
@@ -37,8 +35,7 @@ impl World {
         let camera = Camera::new(
             &device,
             CameraState {
-                eye: (0.0, 1.0, 2.0).into(),
-                // target: (0., 0., 0.).into(),
+                eye: (8.0, 8.0, -32.0).into(),
                 target: (
                     CHUNK_SIZE as f32 / 2.,
                     CHUNK_SIZE as f32 / 2.,
@@ -119,28 +116,10 @@ impl World {
         };
     }
 
-    pub fn update(self: &mut Self, queue: &wgpu::Queue) {
+    pub fn update(&mut self, queue: &wgpu::Queue, _game_state: &GameSate) {
         self.chunks.iter_mut().for_each(|(_pos, chunk)| {
             chunk.update();
         });
-
-        let start = SystemTime::now();
-        let since_the_epoch = start
-            .duration_since(UNIX_EPOCH)
-            .expect("Time went backwards");
-
-        let t = since_the_epoch.as_millis() - 1653596661209;
-        let t = t as f32 / 1000.;
-
-        let max_r: f32 = CHUNK_SIZE as f32 * 2.;
-        let r = max_r * ((t / 3.14159266).sin() + 1.1);
-        let target = self.camera.state.target;
-        self.camera.state.eye = (
-            target.x + t.cos() * r,
-            target.y + (t / 1.76).cos() * r,
-            target.z + t.sin() * r,
-        )
-            .into();
 
         self.camera.update_uniform(queue);
         self.sun.update_uniform(queue);
