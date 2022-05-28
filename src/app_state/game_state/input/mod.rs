@@ -24,7 +24,7 @@ pub struct GameInput {
     input_data: [InputState; InputKey::COUNT],
 
     shift_pressed: bool,
-    ctrl_pressed: bool,
+    // ctrl_pressed: bool,
     // alt_pressed: bool,
     // logo_pressed: bool,
 }
@@ -34,20 +34,16 @@ impl GameInput {
         Self {
             input_data: [InputState::Released; InputKey::COUNT],
             shift_pressed: false,
-            ctrl_pressed: false,
+            // ctrl_pressed: false,
             // alt_pressed: false,
             // logo_pressed: false,
         }
     }
 
-    fn process_special_keys(&mut self, shift: bool, ctrl: bool, _alt: bool, _logo: bool) -> bool {
+    fn process_special_keys(&mut self, shift: bool, _ctrl: bool, _alt: bool, _logo: bool) -> bool {
         if shift != self.shift_pressed {
             self.shift_pressed = shift;
-            return self.handle_key_action(InputKey::MoveUp, shift);
-        }
-        if ctrl != self.ctrl_pressed {
-            self.ctrl_pressed = ctrl;
-            return self.handle_key_action(InputKey::MoveDown, ctrl);
+            return self.handle_key_action(InputKey::MoveDown, shift);
         }
         return false;
     }
@@ -126,6 +122,7 @@ impl GameInput {
             VirtualKeyCode::A => self.handle_key_action(InputKey::MoveLeft, pressed),
             VirtualKeyCode::S => self.handle_key_action(InputKey::MoveBack, pressed),
             VirtualKeyCode::D => self.handle_key_action(InputKey::MoveRight, pressed),
+            VirtualKeyCode::Space => self.handle_key_action(InputKey::MoveUp, pressed),
             _ => false,
         }
     }
