@@ -1,4 +1,7 @@
-use crate::app_state::game_state::{input::InputKey, GameSate};
+use crate::{
+    app_state::game_state::{input::InputKey, GameSate},
+    vec::Vec3,
+};
 use wgpu::util::DeviceExt;
 
 use self::{state::CameraState, uniform::CameraUniform};
@@ -72,12 +75,8 @@ impl Camera {
         queue.write_buffer(&self.buffer, 0, bytemuck::cast_slice(&[self.uniform]));
     }
 
-    pub fn translate(&mut self, offset: cgmath::Point3<f32>) {
-        self.state.eye = cgmath::Point3::new(
-            self.state.eye.x + offset.x,
-            self.state.eye.y + offset.y,
-            self.state.eye.z + offset.z,
-        );
+    pub fn translate(&mut self, offset: Vec3<f32>) {
+        self.state.eye += offset;
     }
 
     pub fn update(&mut self, game_state: &GameSate) {

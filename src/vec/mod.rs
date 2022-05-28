@@ -1,5 +1,6 @@
-use std::ops::{Add, Div, Mul, Neg, Sub};
+use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
 
+use cgmath::{Point3, Vector3};
 use num_traits::{Float, Num};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -12,6 +13,24 @@ pub struct Vec3<T> {
 impl<T> Vec3<T> {
     pub fn new(x: T, y: T, z: T) -> Self {
         Self { x, y, z }
+    }
+}
+
+impl<T> Into<Vec3<T>> for (T, T, T) {
+    fn into(self) -> Vec3<T> {
+        Vec3::new(self.0, self.1, self.2)
+    }
+}
+
+impl<T> From<Vec3<T>> for Vector3<T> {
+    fn from(v: Vec3<T>) -> Self {
+        Self::new(v.x, v.y, v.z)
+    }
+}
+
+impl<T> From<Vec3<T>> for Point3<T> {
+    fn from(v: Vec3<T>) -> Self {
+        Self::new(v.x, v.y, v.z)
     }
 }
 
@@ -28,6 +47,17 @@ where
             y: self.y.clone() + other.y.clone(),
             z: self.z.clone() + other.z.clone(),
         }
+    }
+}
+impl<T> AddAssign for Vec3<T>
+where
+    T: AddAssign<T>,
+    T: Clone,
+{
+    fn add_assign(&mut self, other: Self) {
+        self.x += other.x;
+        self.y += other.y;
+        self.z += other.z;
     }
 }
 

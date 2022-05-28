@@ -8,6 +8,7 @@ use crate::{
     sun::Sun,
     texture,
     utils::position::Position,
+    vec::Vec3,
     vertex::Vertex,
 };
 
@@ -42,7 +43,7 @@ impl World {
                     CHUNK_SIZE as f32 / 2.,
                 )
                     .into(),
-                up: cgmath::Vector3::unit_y(),
+                up: Vec3::new(0., 1., 0.),
                 aspect: config.width as f32 / config.height as f32,
                 fov_y: 45.0,
                 z_near: 0.1,
