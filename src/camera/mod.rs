@@ -13,7 +13,7 @@ pub mod state;
 pub mod uniform;
 
 const SPEED: f32 = 10.0;
-const SENSITIVITY: f32 = 5.0;
+const SENSITIVITY: f32 = 10.0;
 const FAST_MOVE_FACTOR: f32 = 5.;
 
 pub struct Camera {
@@ -136,9 +136,11 @@ impl Camera {
 
         match game_state.game_input.get_input_state(InputKey::CursorFree) {
             InputState::JustPressed => {
+                println!("show");
                 game_state.show_cursor();
             }
             InputState::JustReleased => {
+                println!("hide");
                 game_state.hide_cursor();
             }
             _ => {}

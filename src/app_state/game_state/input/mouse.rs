@@ -1,19 +1,19 @@
 use winit::window::Window;
 
 pub struct MouseInput {
-    first_delta_event: bool,
     x: f32,
     y: f32,
     delta_x: f32,
     delta_y: f32,
+    pub prev_is_cursor_hidden: bool,
     pub is_mouse_hidden: bool,
 }
 
 impl MouseInput {
     pub(super) fn new(is_mouse_hidden: bool) -> Self {
         Self {
-            first_delta_event: true,
             is_mouse_hidden,
+            prev_is_cursor_hidden: !is_mouse_hidden,
             delta_x: 0.,
             delta_y: 0.,
             x: 0.,
@@ -29,8 +29,10 @@ impl MouseInput {
     }
 
     pub(super) fn handle_motion(&mut self, x: f32, y: f32) -> bool {
-        if self.first_delta_event {
-            self.first_delta_event = false;
+        if self.is_mouse_hidden != self.prev_is_cursor_hidden {
+            return false;
+        }
+        if !self.is_mouse_hidden {
             return false;
         }
         self.delta_x = x;

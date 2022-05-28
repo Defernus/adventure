@@ -1,4 +1,5 @@
 use winit::{
+    dpi::PhysicalPosition,
     event::{DeviceEvent, WindowEvent},
     window::Window,
 };
@@ -37,10 +38,21 @@ impl GameSate {
     pub(super) fn post_update(&mut self, window: &Window) {
         self.game_input.post_update();
 
-        window.set_cursor_visible(!self.game_input.mouse.is_mouse_hidden);
-        window
-            .set_cursor_grab(self.game_input.mouse.is_mouse_hidden)
-            .expect("failed to grab cursor");
+        if self.game_input.mouse.is_mouse_hidden != self.game_input.mouse.prev_is_cursor_hidden {
+            self.game_input.mouse.prev_is_cursor_hidden = self.game_input.mouse.is_mouse_hidden;
+
+            println!("current state: {}", self.game_input.mouse.is_mouse_hidden);
+            if self.game_input.mouse.is_mouse_hidden {
+                let size = window.inner_size();
+                window
+                    .set_cursor_position(PhysicalPosition::new(size.width / 2, size.height / 2))
+                    .expect("failed to set mouse position");
+            }
+            window.set_cursor_visible(!self.game_input.mouse.is_mouse_hidden);
+            window
+                .set_cursor_grab(self.game_input.mouse.is_mouse_hidden)
+                .expect("failed to grab cursor");
+        }
     }
 
     pub fn hide_cursor(&mut self) {
