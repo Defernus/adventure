@@ -1,6 +1,6 @@
 use wgpu::util::DeviceExt;
 
-use crate::app_state::game_state::GameSate;
+use crate::app_state::game_state::{input::InputKey, GameSate};
 
 #[rustfmt::skip]
 pub const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
@@ -94,9 +94,11 @@ impl Camera {
         );
     }
 
-    pub fn update(&mut self, _game_state: &GameSate) {
-        // self.translate((-1.0 * game_state.get_delta_time(), 0., 0.).into());
-        // self.uniform.update_view_proj(&self.state);
+    pub fn update(&mut self, game_state: &GameSate) {
+        if game_state.game_input.is_pressed(InputKey::MoveFront) {
+            self.translate((0.0, 0.0, 1.0 * game_state.game_time.get_delta_time()).into());
+            self.uniform.update_view_proj(&self.state);
+        }
     }
 }
 

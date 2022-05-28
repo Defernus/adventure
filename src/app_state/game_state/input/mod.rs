@@ -23,7 +23,7 @@ pub struct GameInput {
 }
 
 impl GameInput {
-    pub fn new() -> Self {
+    pub(super) fn new() -> Self {
         Self {
             input_data: [InputState::Released; InputKey::COUNT],
         }
@@ -48,7 +48,7 @@ impl GameInput {
         return result;
     }
 
-    pub fn update(&mut self) {
+    pub(super) fn update(&mut self) {
         for i in 0..InputKey::COUNT {
             if self.input_data[i] == InputState::JustPressed {
                 self.input_data[i] = InputState::Pressed;
