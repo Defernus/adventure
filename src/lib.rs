@@ -1,7 +1,7 @@
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
-    window::WindowBuilder,
+    window::{Window, WindowBuilder},
 };
 
 pub mod app_state;
@@ -45,8 +45,8 @@ fn handle_input(
     }
 }
 
-fn handle_redraw(state: &mut app_state::AppState, control_flow: &mut ControlFlow) {
-    state.update();
+fn handle_redraw(state: &mut app_state::AppState, control_flow: &mut ControlFlow, window: &Window) {
+    state.update(window);
     match state.render() {
         Ok(_) => {}
         Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
@@ -73,7 +73,7 @@ pub async fn run() {
             handle_input(event, &mut state, control_flow);
         }
         Event::RedrawRequested(window_id) if window_id == window.id() => {
-            handle_redraw(&mut state, control_flow);
+            handle_redraw(&mut state, control_flow, &window);
         }
         Event::RedrawEventsCleared => {
             window.request_redraw();

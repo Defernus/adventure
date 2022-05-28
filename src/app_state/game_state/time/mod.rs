@@ -18,7 +18,7 @@ impl GameTime {
             last_time: start_time,
         }
     }
-    pub(super) fn update(&mut self) {
+    pub(super) fn pre_update(&mut self) {
         self.delta_time = Self::get_current_time() - self.last_time;
         self.last_time = Self::get_current_time();
     }

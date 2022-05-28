@@ -2,6 +2,10 @@ use strum::EnumCount;
 use strum_macros::{EnumCount as EnumCountMacro, EnumIter};
 use winit::event::{ElementState, KeyboardInput, VirtualKeyCode, WindowEvent};
 
+use self::mouse::MouseInput;
+
+pub mod mouse;
+
 #[derive(Copy, Clone, Debug, EnumCountMacro, EnumIter)]
 pub enum InputKey {
     MoveFront,
@@ -10,6 +14,7 @@ pub enum InputKey {
     MoveRight,
     MoveUp,
     MoveDown,
+    CursorFree,
 }
 
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -20,32 +25,22 @@ pub enum InputState {
     JustReleased,
 }
 
+#[allow(dead_code)]
 pub struct GameInput {
     input_data: [InputState; InputKey::COUNT],
 
-    shift_pressed: bool,
-    // ctrl_pressed: bool,
-    // alt_pressed: bool,
-    // logo_pressed: bool,
+    mouse: MouseInput,
+
+    is_in_focus: bool,
 }
 
 impl GameInput {
     pub(super) fn new() -> Self {
         Self {
             input_data: [InputState::Released; InputKey::COUNT],
-            shift_pressed: false,
-            // ctrl_pressed: false,
-            // alt_pressed: false,
-            // logo_pressed: false,
+            mouse: MouseInput::new(),
+            is_in_focus: true,
         }
-    }
-
-    fn process_special_keys(&mut self, shift: bool, _ctrl: bool, _alt: bool, _logo: bool) -> bool {
-        if shift != self.shift_pressed {
-            self.shift_pressed = shift;
-            return self.handle_key_action(InputKey::MoveDown, shift);
-        }
-        return false;
     }
 
     pub(super) fn input(&mut self, event: &WindowEvent) -> bool {
@@ -59,15 +54,24 @@ impl GameInput {
                     },
                 ..
             } => self.keys_action(key, state == &ElementState::Pressed),
-            WindowEvent::ModifiersChanged(v) => {
-                self.process_special_keys(v.shift(), v.ctrl(), v.alt(), v.logo())
+            WindowEvent::CursorMoved { position, .. } => {
+                self.mouse.handle_move(position.x as f32, position.y as f32)
+            }
+            WindowEvent::CursorLeft { .. } => {
+                self.is_in_focus = false;
+                return true;
+            }
+            WindowEvent::CursorEntered { .. } => {
+                self.is_in_focus = true;
+                return true;
             }
             _ => false,
         };
         return result;
     }
 
-    pub(super) fn update(&mut self) {
+    pub(super) fn post_update(&mut self) {
+        self.mouse.post_update();
         for i in 0..InputKey::COUNT {
             if self.input_data[i] == InputState::JustPressed {
                 self.input_data[i] = InputState::Pressed;
@@ -122,7 +126,9 @@ impl GameInput {
             VirtualKeyCode::A => self.handle_key_action(InputKey::MoveLeft, pressed),
             VirtualKeyCode::S => self.handle_key_action(InputKey::MoveBack, pressed),
             VirtualKeyCode::D => self.handle_key_action(InputKey::MoveRight, pressed),
+            VirtualKeyCode::LShift => self.handle_key_action(InputKey::MoveDown, pressed),
             VirtualKeyCode::Space => self.handle_key_action(InputKey::MoveUp, pressed),
+            VirtualKeyCode::Q => self.handle_key_action(InputKey::CursorFree, pressed),
             _ => false,
         }
     }
@@ -136,5 +142,9 @@ impl GameInput {
             InputState::Pressed | InputState::JustPressed => true,
             _ => false,
         }
+    }
+
+    pub fn is_window_in_focus(&self) -> bool {
+        return self.is_in_focus;
     }
 }

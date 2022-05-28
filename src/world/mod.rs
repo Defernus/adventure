@@ -117,7 +117,7 @@ impl World {
         };
     }
 
-    pub fn update(&mut self, queue: &wgpu::Queue, _game_state: &GameSate) {
+    pub fn update(&mut self, queue: &wgpu::Queue, _game_state: &mut GameSate) {
         self.chunks.iter_mut().for_each(|(_pos, chunk)| {
             chunk.update();
         });

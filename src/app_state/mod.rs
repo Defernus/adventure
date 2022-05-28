@@ -15,7 +15,7 @@ pub struct AppState {
     size: winit::dpi::PhysicalSize<u32>,
     depth_texture: texture::Texture,
 
-    game_sate: GameSate,
+    game_state: GameSate,
 
     world: World,
 }
@@ -61,7 +61,7 @@ impl AppState {
             texture::Texture::create_depth_texture(&device, &config, "depth_texture");
 
         Self {
-            game_sate: GameSate::new(),
+            game_state: GameSate::new(),
             depth_texture,
             world: World::new(&device, &config),
             surface,
@@ -86,16 +86,16 @@ impl AppState {
     }
 
     pub fn input(&mut self, event: &WindowEvent) -> bool {
-        self.game_sate.input(event)
+        self.game_state.input(event)
     }
 
-    pub fn update(&mut self) {
-        self.game_sate.pre_update();
+    pub fn update(&mut self, window: &Window) {
+        self.game_state.pre_update();
 
-        self.world.camera.update(&self.game_sate);
-        self.world.update(&self.queue, &self.game_sate);
+        self.world.camera.update(&mut self.game_state);
+        self.world.update(&self.queue, &mut self.game_state);
 
-        self.game_sate.post_update();
+        self.game_state.post_update(window);
     }
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {

@@ -1,5 +1,8 @@
 use crate::{
-    app_state::game_state::{input::InputKey, GameSate},
+    app_state::game_state::{
+        input::{InputKey, InputState},
+        GameSate,
+    },
     vec::Vec3,
 };
 use wgpu::util::DeviceExt;
@@ -82,7 +85,7 @@ impl Camera {
         self.state.eye += offset;
     }
 
-    pub fn update(&mut self, game_state: &GameSate) {
+    pub fn update(&mut self, game_state: &mut GameSate) {
         let dt = game_state.game_time.get_delta_time();
         if game_state.game_input.is_pressed(InputKey::MoveFront) {
             self.translate((0.0, 0.0, SPEED * dt).into());
@@ -101,6 +104,16 @@ impl Camera {
         }
         if game_state.game_input.is_pressed(InputKey::MoveDown) {
             self.translate((0.0, -SPEED * dt, 0.0).into());
+        }
+
+        match game_state.game_input.get_input_state(InputKey::CursorFree) {
+            InputState::JustPressed => {
+                game_state.show_cursor();
+            }
+            InputState::JustReleased => {
+                game_state.hide_cursor();
+            }
+            _ => {}
         }
 
         self.uniform.update_view_proj(&self.state);
