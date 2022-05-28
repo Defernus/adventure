@@ -13,6 +13,7 @@ pub mod state;
 pub mod uniform;
 
 const SPEED: f32 = 10.0;
+const SENSITIVITY: f32 = 1.0;
 
 pub struct Camera {
     pub state: CameraState,
@@ -20,10 +21,11 @@ pub struct Camera {
     bind_group_layout: wgpu::BindGroupLayout,
     bind_group: wgpu::BindGroup,
     uniform: CameraUniform,
+    screen_size: (f32, f32),
 }
 
 impl Camera {
-    pub fn new(device: &wgpu::Device, state: CameraState) -> Self {
+    pub fn new(device: &wgpu::Device, state: CameraState, screen_size: (f32, f32)) -> Self {
         let mut uniform = CameraUniform::new();
         uniform.update_view_proj(&state);
 
@@ -57,6 +59,7 @@ impl Camera {
         });
 
         let result = Self {
+            screen_size,
             uniform,
             state,
             buffer,
@@ -83,6 +86,18 @@ impl Camera {
     pub fn translate(&mut self, offset: Vec3<f32>) {
         self.state.target += offset;
         self.state.eye += offset;
+    }
+
+    pub fn rotate(&mut self, x: f32, y: f32) {
+        let relative_target = self.state.target - self.state.eye;
+        let relative_target = relative_target.rotate(Vec3::new(0.0, 1.0, 0.0), -x);
+        let right = relative_target
+            .clone()
+            .cross(self.state.up.clone())
+            .normalize();
+        let relative_target = relative_target.rotate(right, y);
+
+        self.state.target = relative_target + self.state.eye;
     }
 
     pub fn update(&mut self, game_state: &mut GameSate) {
@@ -115,6 +130,12 @@ impl Camera {
             }
             _ => {}
         }
+
+        let (dx, dy) = game_state.game_input.mouse.get_delta();
+        self.rotate(
+            dx / self.screen_size.0 * SENSITIVITY,
+            -dy / self.screen_size.0 * SENSITIVITY,
+        );
 
         self.uniform.update_view_proj(&self.state);
     }

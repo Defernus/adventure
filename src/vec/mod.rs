@@ -1,7 +1,7 @@
 use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
 
 use cgmath::{Point3, Vector3};
-use num_traits::{Float, Num};
+use num_traits::{Float, Num, NumCast};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Vec3<T> {
@@ -202,5 +202,17 @@ where
 
     pub fn angle(&self, other: Self) -> T {
         self.cos(other).acos()
+    }
+
+    // implementation from here https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
+    pub fn rotate(&self, axis: Self, a: T) -> Self {
+        let cos = a.cos();
+        let sin = a.sin();
+
+        let a = self.clone() * cos;
+        let b = axis.cross(self.clone()) * sin;
+        let c = axis.clone() * axis.clone().dot(self.clone());
+        let d: T = T::from::<f32>(1.).unwrap() - cos;
+        a + b + c * d
     }
 }

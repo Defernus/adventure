@@ -1,6 +1,7 @@
 use std::collections::{self, BTreeMap};
 
 use wgpu::{include_wgsl, Device, RenderPass, RenderPipeline, SurfaceConfiguration};
+use winit::window::Window;
 
 use crate::{
     app_state::game_state::GameSate,
@@ -28,7 +29,8 @@ pub struct World {
 }
 
 impl World {
-    pub fn new(device: &Device, config: &SurfaceConfiguration) -> Self {
+    pub fn new(window: &Window, device: &Device, config: &SurfaceConfiguration) -> Self {
+        let screen_size = window.inner_size();
         let shader = device.create_shader_module(&include_wgsl!("shaders/main.wgsl"));
 
         let sun = Sun::new(&device);
@@ -49,6 +51,7 @@ impl World {
                 z_near: 0.1,
                 z_far: 100.0,
             },
+            (screen_size.width as f32, screen_size.height as f32),
         );
 
         let render_pipeline_layout =

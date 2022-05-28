@@ -61,9 +61,9 @@ impl AppState {
             texture::Texture::create_depth_texture(&device, &config, "depth_texture");
 
         Self {
-            game_state: GameSate::new(),
+            game_state: GameSate::new(window),
             depth_texture,
-            world: World::new(&device, &config),
+            world: World::new(window, &device, &config),
             surface,
             device,
             queue,

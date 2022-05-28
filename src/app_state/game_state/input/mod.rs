@@ -1,6 +1,9 @@
 use strum::EnumCount;
 use strum_macros::{EnumCount as EnumCountMacro, EnumIter};
-use winit::event::{ElementState, KeyboardInput, VirtualKeyCode, WindowEvent};
+use winit::{
+    event::{ElementState, KeyboardInput, VirtualKeyCode, WindowEvent},
+    window::Window,
+};
 
 use self::mouse::MouseInput;
 
@@ -29,16 +32,16 @@ pub enum InputState {
 pub struct GameInput {
     input_data: [InputState; InputKey::COUNT],
 
-    mouse: MouseInput,
+    pub mouse: MouseInput,
 
     is_in_focus: bool,
 }
 
 impl GameInput {
-    pub(super) fn new() -> Self {
+    pub(super) fn new(window: &Window) -> Self {
         Self {
             input_data: [InputState::Released; InputKey::COUNT],
-            mouse: MouseInput::new(),
+            mouse: MouseInput::new(window, true),
             is_in_focus: true,
         }
     }
