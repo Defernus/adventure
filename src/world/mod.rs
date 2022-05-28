@@ -25,6 +25,7 @@ pub struct World {
     chunks: collections::BTreeMap<Position, Chunk>,
     render_pipeline: RenderPipeline,
     pub camera: Camera,
+    max_chunks: usize,
     sun: Sun,
 }
 
@@ -49,7 +50,7 @@ impl World {
                 aspect: config.width as f32 / config.height as f32,
                 fov_y: 45.0,
                 z_near: 0.1,
-                z_far: 100.0,
+                z_far: 1024.0,
             },
             (screen_size.width as f32, screen_size.height as f32),
         );
@@ -115,12 +116,39 @@ impl World {
         return World {
             sun,
             chunks,
+            max_chunks: 32,
             render_pipeline,
             camera,
         };
     }
 
-    pub fn update(&mut self, queue: &wgpu::Queue, _game_state: &mut GameSate) {
+    pub fn load_chunk(&mut self, device: &Device, _game_state: &mut GameSate) -> bool {
+        if self.chunks.len() < self.max_chunks {
+            let camera_pos = self.camera.state.eye;
+            let new_pos = Position::new(
+                (camera_pos.x / CHUNK_SIZE as f32) as i64,
+                (camera_pos.y / CHUNK_SIZE as f32) as i64,
+                (camera_pos.z / CHUNK_SIZE as f32) as i64,
+            );
+
+            match self.chunks.get(&new_pos) {
+                Some(_) => {
+                    return false;
+                }
+                _ => {}
+            }
+
+            let mut new_chunk = Chunk::new(new_pos);
+            new_chunk.generate(device);
+            self.chunks.insert(new_pos, new_chunk);
+            return true;
+        }
+        return false;
+    }
+
+    pub fn update(&mut self, queue: &wgpu::Queue, device: &Device, game_state: &mut GameSate) {
+        self.load_chunk(device, game_state);
+
         self.chunks.iter_mut().for_each(|(_pos, chunk)| {
             chunk.update();
         });

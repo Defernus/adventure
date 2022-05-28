@@ -2,7 +2,7 @@ use strum::IntoEnumIterator;
 
 use crate::{
     utils::{direction::Direction, position::Position},
-    world::block::block_data::BlockData,
+    world::{block::block_data::BlockData, chunk::CHUNK_SIZE},
 };
 
 use super::{get_block_handler, helpers::append_face, IBlockHandler};
@@ -77,13 +77,26 @@ impl IBlockHandler for RegularBlock {
             Some(color) => {
                 let pos = block_data.in_chunk_position;
                 for dir in Direction::iter() {
-                    let block_data = block_data.chunk.get_neighbor(pos.clone(), dir.clone());
-                    match block_data {
+                    let neighbor_block_data =
+                        block_data.chunk.get_neighbor(pos.clone(), dir.clone());
+                    let chunk_pos = block_data.chunk.get_position();
+                    let face_pos = Position::new(
+                        pos.x + chunk_pos.x * CHUNK_SIZE as i64,
+                        pos.y + chunk_pos.y * CHUNK_SIZE as i64,
+                        pos.z + chunk_pos.z * CHUNK_SIZE as i64,
+                    );
+                    match neighbor_block_data {
                         Some(neighbor) => {
-                            Self::append_face(pos.clone(), neighbor, dir.clone(), color, vertex);
+                            Self::append_face(
+                                face_pos.clone(),
+                                neighbor,
+                                dir.clone(),
+                                color,
+                                vertex,
+                            );
                         }
                         None => {
-                            append_face::append_face(vertex, pos.clone(), color, dir.clone());
+                            append_face::append_face(vertex, face_pos.clone(), color, dir.clone());
                         }
                     }
                 }

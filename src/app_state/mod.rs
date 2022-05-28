@@ -106,7 +106,8 @@ impl AppState {
         self.game_state.pre_update(window);
 
         self.world.camera.update(&mut self.game_state);
-        self.world.update(&self.queue, &mut self.game_state);
+        self.world
+            .update(&self.queue, &self.device, &mut self.game_state);
 
         self.game_state.post_update(window);
     }
