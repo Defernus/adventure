@@ -48,7 +48,7 @@ impl World {
                     .into(),
                 up: Vec3::new(0., 1., 0.),
                 aspect: config.width as f32 / config.height as f32,
-                fov_y: 45.0,
+                fov_y: 70.0,
                 z_near: 0.1,
                 z_far: 1024.0,
             },
