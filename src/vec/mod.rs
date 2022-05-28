@@ -1,4 +1,4 @@
-use std::ops::Add;
+use std::ops::{Add, Div, Mul, Neg, Sub};
 
 use num_traits::{Float, Num};
 
@@ -27,6 +27,102 @@ where
             x: self.x.clone() + other.x.clone(),
             y: self.y.clone() + other.y.clone(),
             z: self.z.clone() + other.z.clone(),
+        }
+    }
+}
+
+impl<T> Sub for Vec3<T>
+where
+    T: Sub<T, Output = T>,
+    T: Clone,
+{
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        Self {
+            x: self.x.clone() - other.x.clone(),
+            y: self.y.clone() - other.y.clone(),
+            z: self.z.clone() - other.z.clone(),
+        }
+    }
+}
+
+impl<T> Mul<Vec3<T>> for Vec3<T>
+where
+    T: Mul<T, Output = T>,
+    T: Clone,
+{
+    type Output = Self;
+
+    fn mul(self, other: Self) -> Self {
+        Self {
+            x: self.x.clone() * other.x.clone(),
+            y: self.y.clone() * other.y.clone(),
+            z: self.z.clone() * other.z.clone(),
+        }
+    }
+}
+
+impl<T> Mul<T> for Vec3<T>
+where
+    T: Mul<T, Output = T>,
+    T: Clone,
+{
+    type Output = Self;
+
+    fn mul(self, other: T) -> Self {
+        Self {
+            x: self.x.clone() * other.clone(),
+            y: self.y.clone() * other.clone(),
+            z: self.z.clone() * other.clone(),
+        }
+    }
+}
+
+impl<T> Div<Vec3<T>> for Vec3<T>
+where
+    T: Div<T, Output = T>,
+    T: Clone,
+{
+    type Output = Self;
+
+    fn div(self, other: Self) -> Self {
+        Self {
+            x: self.x.clone() / other.x.clone(),
+            y: self.y.clone() / other.y.clone(),
+            z: self.z.clone() / other.z.clone(),
+        }
+    }
+}
+
+impl<T> Div<T> for Vec3<T>
+where
+    T: Div<T, Output = T>,
+    T: Clone,
+{
+    type Output = Self;
+
+    fn div(self, other: T) -> Self {
+        Self {
+            x: self.x.clone() / other.clone(),
+            y: self.y.clone() / other.clone(),
+            z: self.z.clone() / other.clone(),
+        }
+    }
+}
+
+impl<T> Neg for Vec3<T>
+where
+    T: Neg<Output = T>,
+    T: Clone,
+{
+    type Output = Self;
+
+    fn neg(self) -> Self {
+        Self {
+            x: -self.x.clone(),
+            y: -self.y.clone(),
+            z: -self.z.clone(),
         }
     }
 }
@@ -67,11 +163,7 @@ where
 
     pub fn normalize(&self) -> Self {
         let len = self.length();
-        Self {
-            x: self.x.clone() / len,
-            y: self.y.clone() / len,
-            z: self.z.clone() / len,
-        }
+        self.clone() / len
     }
 
     pub fn cos(&self, other: Self) -> T {
