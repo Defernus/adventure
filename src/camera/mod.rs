@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use crate::{
     app_state::game_state::{
         input::{InputKey, InputState},
@@ -15,6 +17,7 @@ pub mod uniform;
 const SPEED: f32 = 10.0;
 const SENSITIVITY: f32 = 10.0;
 const FAST_MOVE_FACTOR: f32 = 5.;
+const MIN_Y_ANGLE: f32 = PI * 0.1;
 
 pub struct Camera {
     pub state: CameraState,
@@ -101,11 +104,19 @@ impl Camera {
 
     pub fn rotate(&mut self, x: f32, y: f32) {
         let x = x.min(0.1).max(-0.1);
-        let y = y.min(0.1).max(-0.1);
+        let mut y = y.min(0.1).max(-0.1);
 
         let front = (self.state.target - self.state.eye).normalize();
         let front = front.rotate(Vec3::unit_y(), -x);
+
         let right = front.clone().cross(self.state.up.clone()).normalize();
+
+        let y_angle = front.angle(Vec3::unit_y());
+        if y > y_angle - MIN_Y_ANGLE {
+            y = y_angle - MIN_Y_ANGLE;
+        } else if y < y_angle - PI + MIN_Y_ANGLE {
+            y = y_angle - PI + MIN_Y_ANGLE;
+        }
         let front = front.rotate(right, y);
 
         self.state.target = front + self.state.eye;
