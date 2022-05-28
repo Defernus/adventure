@@ -8,6 +8,8 @@ pub enum InputKey {
     MoveLeft,
     MoveBack,
     MoveRight,
+    MoveUp,
+    MoveDown,
 }
 
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -20,16 +22,37 @@ pub enum InputState {
 
 pub struct GameInput {
     input_data: [InputState; InputKey::COUNT],
+
+    shift_pressed: bool,
+    ctrl_pressed: bool,
+    // alt_pressed: bool,
+    // logo_pressed: bool,
 }
 
 impl GameInput {
     pub(super) fn new() -> Self {
         Self {
             input_data: [InputState::Released; InputKey::COUNT],
+            shift_pressed: false,
+            ctrl_pressed: false,
+            // alt_pressed: false,
+            // logo_pressed: false,
         }
     }
 
-    pub fn input(&mut self, event: &WindowEvent) -> bool {
+    fn process_special_keys(&mut self, shift: bool, ctrl: bool, _alt: bool, _logo: bool) -> bool {
+        if shift != self.shift_pressed {
+            self.shift_pressed = shift;
+            return self.handle_key_action(InputKey::MoveUp, shift);
+        }
+        if ctrl != self.ctrl_pressed {
+            self.ctrl_pressed = ctrl;
+            return self.handle_key_action(InputKey::MoveDown, ctrl);
+        }
+        return false;
+    }
+
+    pub(super) fn input(&mut self, event: &WindowEvent) -> bool {
         let result = match event {
             WindowEvent::KeyboardInput {
                 input:
@@ -39,10 +62,10 @@ impl GameInput {
                         ..
                     },
                 ..
-            } => match state {
-                ElementState::Pressed => self.key_pressed(key),
-                ElementState::Released => self.key_released(key),
-            },
+            } => self.keys_action(key, state == &ElementState::Pressed),
+            WindowEvent::ModifiersChanged(v) => {
+                self.process_special_keys(v.shift(), v.ctrl(), v.alt(), v.logo())
+            }
             _ => false,
         };
         return result;
@@ -90,22 +113,19 @@ impl GameInput {
         }
     }
 
-    fn key_pressed(&mut self, key: &VirtualKeyCode) -> bool {
-        match key {
-            VirtualKeyCode::W => self.press_key(InputKey::MoveFront),
-            VirtualKeyCode::A => self.press_key(InputKey::MoveLeft),
-            VirtualKeyCode::S => self.press_key(InputKey::MoveBack),
-            VirtualKeyCode::D => self.press_key(InputKey::MoveRight),
-            _ => false,
+    fn handle_key_action(&mut self, key: InputKey, press: bool) -> bool {
+        match press {
+            true => self.press_key(key),
+            false => self.release_key(key),
         }
     }
 
-    fn key_released(&mut self, key: &VirtualKeyCode) -> bool {
+    fn keys_action(&mut self, key: &VirtualKeyCode, pressed: bool) -> bool {
         match key {
-            VirtualKeyCode::W => self.release_key(InputKey::MoveFront),
-            VirtualKeyCode::A => self.release_key(InputKey::MoveLeft),
-            VirtualKeyCode::S => self.release_key(InputKey::MoveBack),
-            VirtualKeyCode::D => self.release_key(InputKey::MoveRight),
+            VirtualKeyCode::W => self.handle_key_action(InputKey::MoveFront, pressed),
+            VirtualKeyCode::A => self.handle_key_action(InputKey::MoveLeft, pressed),
+            VirtualKeyCode::S => self.handle_key_action(InputKey::MoveBack, pressed),
+            VirtualKeyCode::D => self.handle_key_action(InputKey::MoveRight, pressed),
             _ => false,
         }
     }

@@ -9,6 +9,8 @@ use self::{state::CameraState, uniform::CameraUniform};
 pub mod state;
 pub mod uniform;
 
+const SPEED: f32 = 10.0;
+
 pub struct Camera {
     pub state: CameraState,
     buffer: wgpu::Buffer,
@@ -76,13 +78,31 @@ impl Camera {
     }
 
     pub fn translate(&mut self, offset: Vec3<f32>) {
+        self.state.target += offset;
         self.state.eye += offset;
     }
 
     pub fn update(&mut self, game_state: &GameSate) {
+        let dt = game_state.game_time.get_delta_time();
         if game_state.game_input.is_pressed(InputKey::MoveFront) {
-            self.translate((0.0, 0.0, 1.0 * game_state.game_time.get_delta_time()).into());
-            self.uniform.update_view_proj(&self.state);
+            self.translate((0.0, 0.0, SPEED * dt).into());
         }
+        if game_state.game_input.is_pressed(InputKey::MoveLeft) {
+            self.translate((SPEED * dt, 0.0, 0.0).into());
+        }
+        if game_state.game_input.is_pressed(InputKey::MoveBack) {
+            self.translate((0.0, 0.0, -SPEED * dt).into());
+        }
+        if game_state.game_input.is_pressed(InputKey::MoveRight) {
+            self.translate((-SPEED * dt, 0.0, 0.0).into());
+        }
+        if game_state.game_input.is_pressed(InputKey::MoveUp) {
+            self.translate((0.0, SPEED * dt, 0.0).into());
+        }
+        if game_state.game_input.is_pressed(InputKey::MoveDown) {
+            self.translate((0.0, -SPEED * dt, 0.0).into());
+        }
+
+        self.uniform.update_view_proj(&self.state);
     }
 }
