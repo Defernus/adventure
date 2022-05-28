@@ -49,7 +49,7 @@ fn check_if_solid() {
 #[test]
 fn check_if_not_solid() {
     let pos = Position::new(0, 0, 0);
-    let mut chunk = Chunk::new(Position::new(0, 0, 0));
+    let chunk = Chunk::new(Position::new(0, 0, 0));
 
     let block_data = chunk.get_block(pos.clone()).expect("block not found");
     let handler = get_block_handler(block_data.block);
@@ -57,7 +57,7 @@ fn check_if_not_solid() {
     assert_eq!(handler.is_solid(block_data), false);
 }
 
-#[test]
-fn chunk_get_neighbor_block() {
-    let chunk = Chunk::new(Position::new(0, 0, 0));
-}
+// #[test]
+// fn chunk_get_neighbor_block() {
+//     let chunk = Chunk::new(Position::new(0, 0, 0));
+// }

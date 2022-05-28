@@ -11,6 +11,7 @@ pub mod sun;
 pub mod tests;
 pub mod texture;
 pub mod utils;
+pub mod vec;
 pub mod vertex;
 pub mod world;
 

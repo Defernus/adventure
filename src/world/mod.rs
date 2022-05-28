@@ -4,7 +4,7 @@ use wgpu::{include_wgsl, Device, RenderPass, RenderPipeline, SurfaceConfiguratio
 
 use crate::{
     app_state::game_state::GameSate,
-    camera::{Camera, CameraState},
+    camera::{state::CameraState, Camera},
     sun::Sun,
     texture,
     utils::position::Position,

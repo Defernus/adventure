@@ -25,6 +25,7 @@ dependencies = [
  "env_logger",
  "log",
  "noise",
+ "num-traits",
  "pollster",
  "strum",
  "strum_macros",
