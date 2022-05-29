@@ -8,7 +8,7 @@ use crate::{
     camera::{state::CameraState, Camera},
     sun::Sun,
     texture,
-    utils::position::Position,
+    utils::position::{Position, PositionAroundIterator},
     vec::Vec3,
     vertex::Vertex,
 };
@@ -25,8 +25,11 @@ pub struct World {
     chunks: collections::BTreeMap<Position, Chunk>,
     render_pipeline: RenderPipeline,
     pub camera: Camera,
-    max_chunks: usize,
-    max_chunk_dist: f32,
+    render_distance: usize,
+
+    prev_player_chunk: Position,
+    chunk_load_iterator: PositionAroundIterator,
+
     sun: Sun,
 }
 
@@ -40,13 +43,8 @@ impl World {
         let camera = Camera::new(
             &device,
             CameraState {
-                eye: (8.0, 8.0, -32.0).into(),
-                target: (
-                    CHUNK_SIZE as f32 / 2.,
-                    CHUNK_SIZE as f32 / 2.,
-                    CHUNK_SIZE as f32 / 2.,
-                )
-                    .into(),
+                eye: (8.0, 64., -16.0 * 18.0 + 0.7).into(),
+                target: (0.8, -64., 0.).into(),
                 up: Vec3::new(0., 1., 0.),
                 aspect: config.width as f32 / config.height as f32,
                 fov_y: 70.0,
@@ -114,49 +112,63 @@ impl World {
 
         chunks.insert(chunk_pos.clone(), first_chunk);
 
+        let render_distance = 8;
+
         return World {
-            max_chunk_dist: 64.,
             sun,
             chunks,
-            max_chunks: 32,
+            render_distance,
             render_pipeline,
             camera,
+            prev_player_chunk: Position::new(0, 0, 0),
+            chunk_load_iterator: Position::new(0, 0, 0).iter_around(render_distance),
         };
     }
 
+    fn get_max_chunk(&self) -> usize {
+        (self.render_distance * 2 + 1).pow(3)
+    }
+
     fn load_chunk(&mut self, device: &Device, _game_state: &mut GameSate) -> bool {
-        if self.chunks.len() < self.max_chunks {
-            let camera_pos = self.camera.state.eye;
-            let new_pos = Position::new(
-                (camera_pos.x / CHUNK_SIZE as f32) as i64,
-                (camera_pos.y / CHUNK_SIZE as f32) as i64,
-                (camera_pos.z / CHUNK_SIZE as f32) as i64,
-            );
-
-            match self.chunks.get(&new_pos) {
-                Some(_) => {
-                    return false;
-                }
-                _ => {}
-            }
-
-            let mut new_chunk = Chunk::new(new_pos);
-            new_chunk.generate(device);
-            self.chunks.insert(new_pos, new_chunk);
-            return true;
+        if self.chunks.len() >= self.get_max_chunk() {
+            return false;
         }
-        return false;
+
+        let camera_pos = self.camera.state.eye;
+        let player_chunk_pos = Position::new(
+            (camera_pos.x / CHUNK_SIZE as f32) as i64,
+            (camera_pos.y / CHUNK_SIZE as f32) as i64,
+            (camera_pos.z / CHUNK_SIZE as f32) as i64,
+        );
+
+        if self.prev_player_chunk != player_chunk_pos {
+            println!("player chunk position changed, reset loading iterator");
+            self.prev_player_chunk = player_chunk_pos;
+            self.chunk_load_iterator = player_chunk_pos.iter_around(self.render_distance);
+        }
+
+        for p in self.chunk_load_iterator {
+            if self.chunks.get(&p).is_none() {
+                let mut new_chunk = Chunk::new(p);
+                new_chunk.generate(device);
+                self.chunks.insert(p, new_chunk);
+
+                break;
+            }
+        }
+
+        return true;
     }
 
     fn get_chunk_to_unload(&mut self) -> Option<Position> {
-        for (pos, _chunk) in self.chunks.iter() {
-            let chunk_pos = Vec3::new(pos.x as f32, pos.y as f32, pos.z as f32) * CHUNK_SIZE as f32;
-            let dist = (chunk_pos - self.camera.state.eye).length();
-            if dist > self.max_chunk_dist {
-                println!("chunk at {:?} too far and will be unloaded", pos);
-                return Some(pos.clone());
-            }
-        }
+        // for (pos, _chunk) in self.chunks.iter() {
+        //     let chunk_pos = Vec3::new(pos.x as f32, pos.y as f32, pos.z as f32) * CHUNK_SIZE as f32;
+        //     let dist = (chunk_pos - self.camera.state.eye).length();
+        //     if dist > (self.render_distance * CHUNK_SIZE) as f32 * 2. {
+        //         println!("chunk at {:?} too far and will be unloaded", pos);
+        //         return Some(pos.clone());
+        //     }
+        // }
         return None;
     }
 
