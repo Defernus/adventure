@@ -54,16 +54,20 @@ impl Chunk {
         println!("generating chung {:?}", self.pos);
 
         let simplex = noise::OpenSimplex::new();
-        let noise_scale = 0.1;
+        let noise_scale = 0.06;
         for i in 0..CHUNK_VOLUME {
             let pos = Self::index_to_pos(i);
 
-            let noise_v = simplex.get([
-                (self.pos.x * CHUNK_SIZE as i64 + pos.x) as f64 * noise_scale,
-                (self.pos.y * CHUNK_SIZE as i64 + pos.y) as f64 * noise_scale,
-                (self.pos.z * CHUNK_SIZE as i64 + pos.z) as f64 * noise_scale,
-            ]);
-            self.blocks[i].id = if noise_v > 0.1 { 0 } else { 1 };
+            let x = (self.pos.x * CHUNK_SIZE as i64 + pos.x) as f64;
+            let y = (self.pos.y * CHUNK_SIZE as i64 + pos.y) as f64;
+            let z = (self.pos.z * CHUNK_SIZE as i64 + pos.z) as f64;
+
+            let mut noise_v = simplex.get([x * noise_scale, y * noise_scale, z * noise_scale]);
+            noise_v += 1.0;
+            noise_v /= 2.0;
+
+            noise_v *= 1.0 - (y / CHUNK_SIZE as f64).min(1.0).max(0.0);
+            self.blocks[i].id = if noise_v < 0.4 { 0 } else { 1 };
         }
 
         let vertex = self.generate_vertex();
