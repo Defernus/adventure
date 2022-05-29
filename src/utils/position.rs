@@ -1,4 +1,7 @@
-use std::{cmp::Ordering, ops::Add};
+use std::{
+    cmp::Ordering,
+    ops::{Add, Sub},
+};
 
 use super::direction::Direction;
 
@@ -81,6 +84,18 @@ impl Add for Position {
             x: self.x + other.x,
             y: self.y + other.y,
             z: self.z + other.z,
+        }
+    }
+}
+
+impl Sub for Position {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self::Output {
+        Self {
+            x: self.x - other.x,
+            y: self.y - other.y,
+            z: self.z - other.z,
         }
     }
 }
