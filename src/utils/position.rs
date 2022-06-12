@@ -17,6 +17,10 @@ impl Position {
         return Position { x, y, z };
     }
 
+    pub fn mul_scalar(&self, val: i64) -> Self {
+        Position::new(self.x * val, self.y * val, self.z * val)
+    }
+
     pub fn get_east_neighbor(&self) -> Position {
         Position::new(self.x + 1, self.y, self.z)
     }
@@ -49,6 +53,9 @@ impl Position {
 
     pub fn iter_around(&self, radius: usize) -> PositionAroundIterator {
         PositionAroundIterator::new(self.clone(), radius)
+    }
+    pub fn iter_neighbors(&self) -> PositionIterNeighbors {
+        PositionIterNeighbors::new(self.clone())
     }
 }
 
@@ -109,6 +116,54 @@ impl PartialOrd for Position {
 impl PartialEq for Position {
     fn eq(&self, other: &Self) -> bool {
         self.x == other.x && self.y == other.y && self.z == other.z
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct PositionIterNeighbors {
+    x: i64,
+    y: i64,
+    z: i64,
+    pos: Position,
+}
+
+impl PositionIterNeighbors {
+    pub fn new(pos: Position) -> Self {
+        Self {
+            x: -1,
+            y: -1,
+            z: -1,
+            pos,
+        }
+    }
+}
+
+impl Iterator for PositionIterNeighbors {
+    type Item = Position;
+
+    fn next(&mut self) -> Option<Position> {
+        if self.z > 1 {
+            return None;
+        }
+        let result = Position::new(
+            self.pos.x + self.x,
+            self.pos.y + self.y,
+            self.pos.z + self.z,
+        );
+
+        self.x += 1;
+        if self.x > 1 {
+            self.x = -1;
+            self.y += 1;
+            if self.y > 1 {
+                self.y = -1;
+                self.z += 1;
+            }
+        } else if self.x == 0 && self.y == 0 && self.z == 0 {
+            self.x += 1;
+        }
+
+        return Some(result);
     }
 }
 

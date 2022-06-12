@@ -69,43 +69,33 @@ const NODES: [VertexNode; NODES_POS_COUNT] = [DN, DE, DS, DW, UN, UE, US, UW, NW
 type Nodes = [Voxel; NODES_POS_COUNT];
 type VoxelsBlock = [[[Voxel; 2]; 2]; 2];
 
+fn get_voxel(chunk: &Chunk, pos: Position) -> Voxel {
+    match chunk.get_voxel(pos) {
+        Some(voxel) => voxel,
+        _ => Voxel { id: 0, value: 0. },
+    }
+}
+
 fn get_voxels_for_vertex(chunk: &Chunk, base_pos: Position) -> VoxelsBlock {
-    let err = "voxel not in the chunk";
     let voxels: [[[Voxel; 2]; 2]; 2] = [
         [
             [
-                chunk
-                    .get_voxel(base_pos + Position::new(0, 0, 0))
-                    .expect(err),
-                chunk
-                    .get_voxel(base_pos + Position::new(0, 0, 1))
-                    .expect(err),
+                get_voxel(chunk, base_pos + Position::new(0, 0, 0)),
+                get_voxel(chunk, base_pos + Position::new(0, 0, 1)),
             ],
             [
-                chunk
-                    .get_voxel(base_pos + Position::new(0, 1, 0))
-                    .expect(err),
-                chunk
-                    .get_voxel(base_pos + Position::new(0, 1, 1))
-                    .expect(err),
+                get_voxel(chunk, base_pos + Position::new(0, 1, 0)),
+                get_voxel(chunk, base_pos + Position::new(0, 1, 1)),
             ],
         ],
         [
             [
-                chunk
-                    .get_voxel(base_pos + Position::new(1, 0, 0))
-                    .expect(err),
-                chunk
-                    .get_voxel(base_pos + Position::new(1, 0, 1))
-                    .expect(err),
+                get_voxel(chunk, base_pos + Position::new(1, 0, 0)),
+                get_voxel(chunk, base_pos + Position::new(1, 0, 1)),
             ],
             [
-                chunk
-                    .get_voxel(base_pos + Position::new(1, 1, 0))
-                    .expect(err),
-                chunk
-                    .get_voxel(base_pos + Position::new(1, 1, 1))
-                    .expect(err),
+                get_voxel(chunk, base_pos + Position::new(1, 1, 0)),
+                get_voxel(chunk, base_pos + Position::new(1, 1, 1)),
             ],
         ],
     ];

@@ -13,7 +13,10 @@ use crate::{
     vertex::Vertex,
 };
 
-use self::chunk::{Chunk, CHUNK_SIZE};
+use self::{
+    chunk::{Chunk, CHUNK_VOXELS_SIZE},
+    voxel::Voxel,
+};
 
 pub mod chunk;
 pub mod voxel;
@@ -127,9 +130,9 @@ impl World {
 
         let camera_pos = self.camera.state.eye;
         let player_chunk_pos = Position::new(
-            (camera_pos.x / CHUNK_SIZE as f32) as i64,
-            (camera_pos.y / CHUNK_SIZE as f32) as i64,
-            (camera_pos.z / CHUNK_SIZE as f32) as i64,
+            (camera_pos.x / CHUNK_VOXELS_SIZE as f32) as i64,
+            (camera_pos.y / CHUNK_VOXELS_SIZE as f32) as i64,
+            (camera_pos.z / CHUNK_VOXELS_SIZE as f32) as i64,
         );
 
         if self.prev_player_chunk != player_chunk_pos {
@@ -138,26 +141,26 @@ impl World {
             self.chunk_load_iterator = player_chunk_pos.iter_around(self.render_distance);
         }
 
-        let mut chunk_generated: usize = 0;
+        let mut chunk_generated: Vec<Position> = vec![];
         for p in self.chunk_load_iterator {
             if self.chunks.get(&p).is_none() {
                 let mut new_chunk = Chunk::new(self, p);
                 new_chunk.generate(device);
                 self.chunks.insert(p, new_chunk);
 
-                chunk_generated += 1;
-                if chunk_generated >= self.chunk_generating_per_frame {
+                chunk_generated.push(p.clone());
+                if chunk_generated.len() >= self.chunk_generating_per_frame {
                     break;
                 }
             }
         }
 
-        return chunk_generated > 0;
+        return chunk_generated.len() > 0;
     }
 
     fn get_chunk_to_unload(&mut self) -> Option<Position> {
         for (chunk_pos, _chunk) in self.chunks.iter() {
-            let player_pos = self.camera.state.eye / CHUNK_SIZE as f32;
+            let player_pos = self.camera.state.eye / CHUNK_VOXELS_SIZE as f32;
             let player_pos = Position::new(
                 player_pos.x as i64,
                 player_pos.y as i64,
@@ -209,5 +212,23 @@ impl World {
         for (_pos, chunk) in self.chunks.iter() {
             chunk.draw(render_pass);
         }
+    }
+
+    pub fn get_chunk(&self, chunk_pos: Position) -> Option<&Chunk> {
+        self.chunks.get(&chunk_pos)
+    }
+
+    pub fn get_voxel(&self, pos: Position) -> Option<Voxel> {
+        let chunk_pos = Chunk::get_chunk_pos(pos);
+
+        match self.get_chunk(chunk_pos) {
+            Some(chunk) => {
+                let in_chunk_pos = Chunk::get_in_chunk_pos(pos);
+                return chunk.get_voxel(in_chunk_pos);
+            }
+            None => {
+                return None;
+            }
+        };
     }
 }
