@@ -1,9 +1,9 @@
 use crate::{utils::position::Position, world::chunk::Chunk};
 
-use super::Block;
+use super::Voxel;
 
-pub struct BlockData<'a> {
+pub struct VoxelData<'a> {
     pub chunk: &'a Chunk,
-    pub block: Block,
+    pub voxel: Voxel,
     pub in_chunk_position: Position,
 }

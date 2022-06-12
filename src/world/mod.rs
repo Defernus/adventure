@@ -13,13 +13,10 @@ use crate::{
     vertex::Vertex,
 };
 
-use self::{
-    block::block_handlers::load_block_handlers,
-    chunk::{Chunk, CHUNK_SIZE},
-};
+use self::chunk::{Chunk, CHUNK_SIZE};
 
-pub mod block;
 pub mod chunk;
+pub mod voxel;
 
 pub struct World {
     chunks: collections::BTreeMap<Position, Chunk>,
@@ -102,8 +99,6 @@ impl World {
             },
             multiview: None,
         });
-
-        load_block_handlers();
 
         let chunks = BTreeMap::new();
 

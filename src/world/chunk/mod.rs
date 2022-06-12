@@ -6,7 +6,7 @@ use crate::{
     vertex::Vertex,
 };
 
-use super::block::{block_data::BlockData, block_handlers::get_block_handler, Block};
+use super::voxel::{voxel_data::VoxelData, voxels_to_vertex::append_vertex, Voxel};
 
 pub const CHUNK_SIZE: usize = 16;
 pub const CHUNK_VOLUME: usize = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE;
@@ -14,7 +14,7 @@ pub const CHUNK_VOLUME: usize = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE;
 pub struct Chunk {
     pos: Position,
     vertex_data: Option<ChunkVertex>,
-    blocks: [Block; CHUNK_VOLUME],
+    pub voxels: [Voxel; CHUNK_VOLUME],
 }
 
 struct ChunkVertex {
@@ -26,25 +26,31 @@ impl Chunk {
     pub fn new(pos: Position) -> Self {
         Self {
             pos: pos,
-            blocks: [Block { value: 1., id: 0 }; CHUNK_VOLUME],
+            voxels: [Voxel { value: 1., id: 0 }; CHUNK_VOLUME],
             vertex_data: None,
         }
     }
 
     fn generate_vertex(&mut self) -> Vec<Vertex> {
         let mut vertex: Vec<Vertex> = Vec::new();
-        for i in 0..CHUNK_VOLUME {
-            let handler = get_block_handler(self.blocks[i]);
-            let block_data = BlockData {
-                chunk: self,
-                block: self.blocks[i].clone(),
-                in_chunk_position: Position {
-                    x: (i % CHUNK_SIZE) as i64,
-                    y: ((i / CHUNK_SIZE) % CHUNK_SIZE) as i64,
-                    z: (i / CHUNK_SIZE / CHUNK_SIZE) as i64,
-                },
-            };
-            handler.update_vertex(block_data, &mut vertex);
+        for x in 0..(CHUNK_SIZE - 1) {
+            for y in 0..(CHUNK_SIZE - 1) {
+                for z in 0..(CHUNK_SIZE - 1) {
+                    append_vertex(
+                        Position::new(x as i64, y as i64, z as i64),
+                        self,
+                        &mut vertex,
+                    );
+                }
+            }
+        }
+
+        for v in vertex.iter_mut() {
+            v.position = [
+                v.position[0] + (self.pos.x * CHUNK_SIZE as i64) as f32,
+                v.position[1] + (self.pos.y * CHUNK_SIZE as i64) as f32,
+                v.position[2] + (self.pos.z * CHUNK_SIZE as i64) as f32,
+            ]
         }
 
         return vertex;
@@ -70,10 +76,10 @@ impl Chunk {
             noise_v *= 1.0 - (y / CHUNK_SIZE as f64).min(1.0).max(0.0);
 
             if noise_v < noise_threshold.into() {
-                self.blocks[i].id = 0;
+                self.voxels[i].id = 0;
             } else {
-                self.blocks[i].id = 1;
-                self.blocks[i].value = (noise_v as f32 - noise_threshold) / (1. - noise_threshold);
+                self.voxels[i].id = 1;
+                self.voxels[i].value = (noise_v as f32 - noise_threshold) / (1. - noise_threshold);
             };
         }
 
@@ -116,10 +122,10 @@ impl Chunk {
         );
     }
 
-    pub fn set_block(&mut self, in_chunk_position: Position, block: Block) -> bool {
+    pub fn set_block(&mut self, in_chunk_position: Position, block: Voxel) -> bool {
         match Self::pos_to_index(in_chunk_position) {
             Some(index) => {
-                self.blocks[index] = block;
+                self.voxels[index] = block;
                 return true;
             }
             _ => {
@@ -128,12 +134,12 @@ impl Chunk {
         }
     }
 
-    pub fn get_block(&self, in_chunk_position: Position) -> Option<BlockData> {
+    pub fn get_voxel(&self, in_chunk_position: Position) -> Option<VoxelData> {
         match Self::pos_to_index(in_chunk_position.clone()) {
             Some(index) => {
-                let block = self.blocks[index];
-                return Some(BlockData {
-                    block,
+                let voxel = self.voxels[index];
+                return Some(VoxelData {
+                    voxel,
                     chunk: self,
                     in_chunk_position,
                 });
@@ -144,12 +150,12 @@ impl Chunk {
         }
     }
 
-    pub fn set_pos(&self, in_chunk_position: Position) -> Option<BlockData> {
+    pub fn set_pos(&self, in_chunk_position: Position) -> Option<VoxelData> {
         match Self::pos_to_index(in_chunk_position.clone()) {
             Some(index) => {
-                let block = self.blocks[index];
-                return Some(BlockData {
-                    block,
+                let voxel = self.voxels[index];
+                return Some(VoxelData {
+                    voxel,
                     chunk: self,
                     in_chunk_position,
                 });
@@ -169,13 +175,13 @@ impl Chunk {
             && pos.z < CHUNK_SIZE as i64;
     }
 
-    pub fn get_neighbor(&self, pos: Position, dir: Direction) -> Option<BlockData> {
+    pub fn get_neighbor(&self, pos: Position, dir: Direction) -> Option<VoxelData> {
         let result_pos = pos.get_neighbor(dir);
 
         match Self::pos_to_index(result_pos.clone()) {
             Some(index) => {
-                return Some(BlockData {
-                    block: self.blocks[index],
+                return Some(VoxelData {
+                    voxel: self.voxels[index],
                     in_chunk_position: result_pos.clone(),
                     chunk: &self,
                 });

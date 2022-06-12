@@ -11,8 +11,17 @@ pub struct Vec3<T> {
 }
 
 impl<T> Vec3<T> {
-    pub fn new(x: T, y: T, z: T) -> Self {
+    pub const fn new(x: T, y: T, z: T) -> Self {
         Self { x, y, z }
+    }
+}
+
+impl<T> Vec3<T>
+where
+    T: Copy,
+{
+    pub fn to_arr(&self) -> [T; 3] {
+        [self.x, self.y, self.z]
     }
 }
 
