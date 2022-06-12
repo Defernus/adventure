@@ -73,7 +73,7 @@ pub struct SunUniform {
 
 impl SunUniform {
     pub fn new() -> Self {
-        let vec = Vec3::new(-1., 7., -4.).normalize();
+        let vec = Vec3::new(-1., 2., -4.).normalize();
         Self {
             direction: [vec.x, vec.y, vec.z, 0.0],
         }

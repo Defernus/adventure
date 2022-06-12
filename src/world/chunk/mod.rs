@@ -15,7 +15,7 @@ pub const CHUNK_VOLUME: usize = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE;
 pub struct Chunk {
     pos: Position,
     vertex_data: Option<ChunkVertex>,
-    pub voxels: [Voxel; CHUNK_VOLUME],
+    voxels: [Voxel; CHUNK_VOLUME],
 }
 
 struct ChunkVertex {
@@ -138,7 +138,18 @@ impl Chunk {
         }
     }
 
-    pub fn get_voxel(&self, in_chunk_position: Position) -> Option<VoxelData> {
+    pub fn get_voxel(&self, in_chunk_position: Position) -> Option<Voxel> {
+        match Self::pos_to_index(in_chunk_position.clone()) {
+            Some(index) => {
+                return Some(self.voxels[index]);
+            }
+            _ => {
+                return None;
+            }
+        }
+    }
+
+    pub fn get_voxel_data(&self, in_chunk_position: Position) -> Option<VoxelData> {
         match Self::pos_to_index(in_chunk_position.clone()) {
             Some(index) => {
                 let voxel = self.voxels[index];

@@ -32,7 +32,7 @@ fn vs_main(
 ) -> VertexOutput {
     var out: VertexOutput;
 
-    let light = (dot(model.normal, sun.direction) + 1.0) / 2.0;
+    let light = (dot(model.normal, sun.direction) * 0.5 + 1.0) / 2.0;
     // let light = 1.0;
     out.color = model.color * light;
 
@@ -43,7 +43,9 @@ fn vs_main(
 
 // Fragment shader
 
+let GAMMA_POW: f32 = 0.454545455;
+
 [[stage(fragment)]]
 fn fs_main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
-    return vec4<f32>(in.color, 1.0);
+    return vec4<f32>(pow(in.color, vec3<f32>(GAMMA_POW)), 1.0);
 }

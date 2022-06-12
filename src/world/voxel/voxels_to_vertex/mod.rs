@@ -74,22 +74,38 @@ fn get_voxels_for_vertex(chunk: &Chunk, base_pos: Position) -> VoxelsBlock {
     let voxels: [[[Voxel; 2]; 2]; 2] = [
         [
             [
-                chunk.voxels[Chunk::pos_to_index(base_pos + Position::new(0, 0, 0)).expect(err)],
-                chunk.voxels[Chunk::pos_to_index(base_pos + Position::new(0, 0, 1)).expect(err)],
+                chunk
+                    .get_voxel(base_pos + Position::new(0, 0, 0))
+                    .expect(err),
+                chunk
+                    .get_voxel(base_pos + Position::new(0, 0, 1))
+                    .expect(err),
             ],
             [
-                chunk.voxels[Chunk::pos_to_index(base_pos + Position::new(0, 1, 0)).expect(err)],
-                chunk.voxels[Chunk::pos_to_index(base_pos + Position::new(0, 1, 1)).expect(err)],
+                chunk
+                    .get_voxel(base_pos + Position::new(0, 1, 0))
+                    .expect(err),
+                chunk
+                    .get_voxel(base_pos + Position::new(0, 1, 1))
+                    .expect(err),
             ],
         ],
         [
             [
-                chunk.voxels[Chunk::pos_to_index(base_pos + Position::new(1, 0, 0)).expect(err)],
-                chunk.voxels[Chunk::pos_to_index(base_pos + Position::new(1, 0, 1)).expect(err)],
+                chunk
+                    .get_voxel(base_pos + Position::new(1, 0, 0))
+                    .expect(err),
+                chunk
+                    .get_voxel(base_pos + Position::new(1, 0, 1))
+                    .expect(err),
             ],
             [
-                chunk.voxels[Chunk::pos_to_index(base_pos + Position::new(1, 1, 0)).expect(err)],
-                chunk.voxels[Chunk::pos_to_index(base_pos + Position::new(1, 1, 1)).expect(err)],
+                chunk
+                    .get_voxel(base_pos + Position::new(1, 1, 0))
+                    .expect(err),
+                chunk
+                    .get_voxel(base_pos + Position::new(1, 1, 1))
+                    .expect(err),
             ],
         ],
     ];
@@ -169,9 +185,9 @@ fn append_triangle(
     let b_pos = shift_node_pos(b.pos, b_v) + pos_vec;
     let c_pos = shift_node_pos(c.pos, c_v) + pos_vec;
 
-    let a_color: [f32; 3] = [1.; 3];
-    let b_color: [f32; 3] = [1.; 3];
-    let c_color: [f32; 3] = [1.; 3];
+    let a_color: [f32; 3] = [0.9; 3];
+    let b_color: [f32; 3] = [0.9; 3];
+    let c_color: [f32; 3] = [0.9; 3];
 
     let normal_vec = (c_pos - a_pos).cross(b_pos - a_pos).normalize();
     let normal: [f32; 3] = [normal_vec.x, normal_vec.y, normal_vec.z];
