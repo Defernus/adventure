@@ -7,13 +7,17 @@ use crate::{
     vertex::Vertex,
 };
 
-use super::voxel::{voxel_data::VoxelData, voxels_to_vertex::append_vertex, Voxel};
+use super::{
+    voxel::{voxel_data::VoxelData, voxels_to_vertex::append_vertex, Voxel},
+    World,
+};
 
 pub const CHUNK_SIZE: usize = 16;
 pub const CHUNK_VOLUME: usize = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE;
 
 pub struct Chunk {
     pos: Position,
+    world: *mut World,
     vertex_data: Option<ChunkVertex>,
     voxels: [Voxel; CHUNK_VOLUME],
 }
@@ -24,8 +28,9 @@ struct ChunkVertex {
 }
 
 impl Chunk {
-    pub fn new(pos: Position) -> Self {
+    pub fn new(world: &mut World, pos: Position) -> Self {
         Self {
+            world,
             pos: pos,
             voxels: [Voxel { value: 1., id: 0 }; CHUNK_VOLUME],
             vertex_data: None,
@@ -126,10 +131,10 @@ impl Chunk {
         );
     }
 
-    pub fn set_block(&mut self, in_chunk_position: Position, block: Voxel) -> bool {
+    pub fn set_voxel(&mut self, in_chunk_position: Position, voxel: Voxel) -> bool {
         match Self::pos_to_index(in_chunk_position) {
             Some(index) => {
-                self.voxels[index] = block;
+                self.voxels[index] = voxel;
                 return true;
             }
             _ => {

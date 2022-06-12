@@ -141,7 +141,7 @@ impl World {
         let mut chunk_generated: usize = 0;
         for p in self.chunk_load_iterator {
             if self.chunks.get(&p).is_none() {
-                let mut new_chunk = Chunk::new(p);
+                let mut new_chunk = Chunk::new(self, p);
                 new_chunk.generate(device);
                 self.chunks.insert(p, new_chunk);
 
