@@ -26,7 +26,7 @@ impl Chunk {
     pub fn new(pos: Position) -> Self {
         Self {
             pos: pos,
-            blocks: [Block { id: 0 }; CHUNK_VOLUME],
+            blocks: [Block { value: 1., id: 0 }; CHUNK_VOLUME],
             vertex_data: None,
         }
     }
@@ -51,10 +51,11 @@ impl Chunk {
     }
 
     pub fn generate(&mut self, device: &Device) {
-        println!("generating chung {:?}", self.pos);
+        // println!("generating chunk {:?}", self.pos);
 
         let simplex = noise::OpenSimplex::new();
-        let noise_scale = 0.06;
+        let noise_scale = 0.03;
+        let noise_threshold: f32 = 0.4;
         for i in 0..CHUNK_VOLUME {
             let pos = Self::index_to_pos(i);
 
@@ -67,7 +68,13 @@ impl Chunk {
             noise_v /= 2.0;
 
             noise_v *= 1.0 - (y / CHUNK_SIZE as f64).min(1.0).max(0.0);
-            self.blocks[i].id = if noise_v < 0.4 { 0 } else { 1 };
+
+            if noise_v < noise_threshold.into() {
+                self.blocks[i].id = 0;
+            } else {
+                self.blocks[i].id = 1;
+                self.blocks[i].value = (noise_v as f32 - noise_threshold) / (1. - noise_threshold);
+            };
         }
 
         let vertex = self.generate_vertex();

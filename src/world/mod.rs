@@ -172,7 +172,7 @@ impl World {
 
             if delta.x.abs().max(delta.y.abs()).max(delta.z.abs()) > self.render_distance as i64 + 1
             {
-                println!("chunk at {:?} too far and will be unloaded", chunk_pos);
+                // println!("chunk at {:?} too far and will be unloaded", chunk_pos);
                 return Some(chunk_pos.clone());
             }
         }

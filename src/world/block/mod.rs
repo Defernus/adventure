@@ -5,5 +5,6 @@ pub type BlockId = u32;
 
 #[derive(Clone, Copy)]
 pub struct Block {
+    pub value: f32,
     pub id: BlockId,
 }

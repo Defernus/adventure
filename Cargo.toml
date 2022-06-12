@@ -2,7 +2,6 @@
 name = "adventure"
 version = "0.1.0"
 edition = "2021"
-features = ["trait_alias"]
 
 [dependencies]
 winit = "0.26"

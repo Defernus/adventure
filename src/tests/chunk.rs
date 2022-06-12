@@ -14,7 +14,7 @@ fn get_set_and_get_block() {
     let block = chunk.get_block(pos.clone()).expect("0 block not found");
     assert_eq!(block.block.id, 0);
 
-    chunk.set_block(pos.clone(), Block { id: 1 });
+    chunk.set_block(pos.clone(), Block { value: 1., id: 1 });
     let block = chunk.get_block(pos.clone()).expect("1 block not found");
     assert_eq!(block.block.id, 1);
 }
@@ -25,7 +25,7 @@ fn get_neighbor() {
     let mut chunk = Chunk::new(Position::new(0, 0, 0));
     let neighbor_pos = pos.get_neighbor(Direction::East);
 
-    chunk.set_block(neighbor_pos.clone(), Block { id: 1 });
+    chunk.set_block(neighbor_pos.clone(), Block { value: 1., id: 1 });
     let block = chunk
         .get_neighbor(pos, Direction::East)
         .expect("neighbor not found");
@@ -37,7 +37,7 @@ fn get_neighbor() {
 fn check_if_solid() {
     let pos = Position::new(0, 0, 0);
     let mut chunk = Chunk::new(Position::new(0, 0, 0));
-    chunk.set_block(pos.clone(), Block { id: 1 });
+    chunk.set_block(pos.clone(), Block { value: 1., id: 1 });
 
     let block_data = chunk.get_block(pos.clone()).expect("block not found");
 
