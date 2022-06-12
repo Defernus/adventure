@@ -100,11 +100,14 @@ fn chose_voxel_for_node(a: Voxel, b: Voxel) -> Voxel {
     if a.id == 0 {
         return Voxel {
             id: b.id,
-            value: 1. - b.value,
+            value: (-a.value) / (b.value - a.value),
         };
     }
     if b.id == 0 {
-        return a.clone();
+        return Voxel {
+            id: a.id,
+            value: 1.0 - (-b.value) / (a.value - b.value),
+        };
     }
     return Voxel { id: 0, value: 0. };
 }
@@ -130,6 +133,20 @@ fn get_vertex_nodes(voxels: VoxelsBlock) -> Nodes {
     return result;
 }
 
+fn shift_node_pos(pos: Vec3<f32>, value: f32) -> Vec3<f32> {
+    if pos.x == 0.5 {
+        return Vec3::new(value, pos.y, pos.z);
+    }
+    if pos.y == 0.5 {
+        return Vec3::new(pos.x, value, pos.z);
+    }
+    if pos.z == 0.5 {
+        return Vec3::new(pos.x, pos.y, value);
+    }
+
+    panic!("failed to process pos {:?}", pos);
+}
+
 fn append_triangle(
     pos: Position,
     vertex: &mut Vec<Vertex>,
@@ -138,35 +155,41 @@ fn append_triangle(
     b: VertexNode,
     c: VertexNode,
 ) {
-    if nodes[a.index].id == 0 || nodes[b.index].id == 0 || nodes[c.index].id == 0 {
+    let a_v = nodes[a.index].value;
+    let b_v = nodes[b.index].value;
+    let c_v = nodes[c.index].value;
+
+    if a_v < 0. || a_v < 0. || c_v < 0. {
         return;
     }
 
     let pos_vec = Vec3::new(pos.x as f32, pos.y as f32, pos.z as f32);
 
-    let a_pos = a.pos + pos_vec;
-    let b_pos = b.pos + pos_vec;
-    let c_pos = c.pos + pos_vec;
+    let a_pos = shift_node_pos(a.pos, a_v) + pos_vec;
+    let b_pos = shift_node_pos(b.pos, b_v) + pos_vec;
+    let c_pos = shift_node_pos(c.pos, c_v) + pos_vec;
 
-    let color: [f32; 3] = [1., 1., 1.];
+    let a_color: [f32; 3] = [1.; 3];
+    let b_color: [f32; 3] = [1.; 3];
+    let c_color: [f32; 3] = [1.; 3];
 
-    let normal_vec = (b_pos - a_pos).cross(c_pos - a_pos).normalize();
+    let normal_vec = (c_pos - a_pos).cross(b_pos - a_pos).normalize();
     let normal: [f32; 3] = [normal_vec.x, normal_vec.y, normal_vec.z];
 
     vertex.push(Vertex {
-        color,
+        color: a_color,
         normal,
-        position: a_pos.to_arr(),
+        position: c_pos.to_arr(),
     });
     vertex.push(Vertex {
-        color,
+        color: b_color,
         normal,
         position: b_pos.to_arr(),
     });
     vertex.push(Vertex {
-        color,
+        color: c_color,
         normal,
-        position: c_pos.to_arr(),
+        position: a_pos.to_arr(),
     });
 }
 
@@ -183,7 +206,7 @@ pub fn append_vertex(pos: Position, chunk: &Chunk, vertex: &mut Vec<Vertex>) {
         let b = NODES[triangle_points[triangle_offset + 1] as usize];
         let c = NODES[triangle_points[triangle_offset + 2] as usize];
 
-        append_triangle(pos, vertex, nodes, b, a, c);
+        append_triangle(pos, vertex, nodes, a, b, c);
 
         triangle_offset += 3;
     }

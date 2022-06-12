@@ -1,5 +1,7 @@
 use wgpu::util::DeviceExt;
 
+use crate::vec::Vec3;
+
 pub struct Sun {
     buffer: wgpu::Buffer,
     bind_group_layout: wgpu::BindGroupLayout,
@@ -71,8 +73,9 @@ pub struct SunUniform {
 
 impl SunUniform {
     pub fn new() -> Self {
+        let vec = Vec3::new(-1., 7., -4.).normalize();
         Self {
-            direction: [0.267, 0.802, 0.535, 0.0],
+            direction: [vec.x, vec.y, vec.z, 0.0],
         }
     }
 }

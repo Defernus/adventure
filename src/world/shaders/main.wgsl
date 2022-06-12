@@ -33,6 +33,7 @@ fn vs_main(
     var out: VertexOutput;
 
     let light = (dot(model.normal, sun.direction) + 1.0) / 2.0;
+    // let light = 1.0;
     out.color = model.color * light;
 
     out.clip_position = camera.view_proj * vec4<f32>(model.position, 1.0);

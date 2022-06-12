@@ -41,8 +41,8 @@ impl World {
         let camera = Camera::new(
             &device,
             CameraState {
-                eye: (8.0, 64., -16.0 * 18.0 + 0.7).into(),
-                target: (0.8, -64., 0.).into(),
+                eye: (0., 0., 0.).into(),
+                target: (0., 0., -1.0).into(),
                 up: Vec3::new(0., 1., 0.),
                 aspect: config.width as f32 / config.height as f32,
                 fov_y: 70.0,

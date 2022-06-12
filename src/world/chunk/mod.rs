@@ -3,6 +3,7 @@ use wgpu::{util::DeviceExt, Device, RenderPass};
 
 use crate::{
     utils::{direction::Direction, position::Position},
+    vec::Vec3,
     vertex::Vertex,
 };
 
@@ -69,17 +70,20 @@ impl Chunk {
             let y = (self.pos.y * CHUNK_SIZE as i64 + pos.y) as f64;
             let z = (self.pos.z * CHUNK_SIZE as i64 + pos.z) as f64;
 
-            let mut noise_v = simplex.get([x * noise_scale, y * noise_scale, z * noise_scale]);
+            let mut noise_v =
+                simplex.get([x * noise_scale, y * noise_scale, z * noise_scale]) as f32;
             noise_v += 1.0;
             noise_v /= 2.0;
 
-            noise_v *= 1.0 - (y / CHUNK_SIZE as f64).min(1.0).max(0.0);
+            noise_v *= 1.0 - (y as f32 / CHUNK_SIZE as f32).min(1.0).max(0.0);
+            noise_v -= noise_threshold;
+            noise_v /= noise_scale as f32;
 
-            if noise_v < noise_threshold.into() {
+            self.voxels[i].value = noise_v / 2.;
+            if noise_v < 0. {
                 self.voxels[i].id = 0;
             } else {
                 self.voxels[i].id = 1;
-                self.voxels[i].value = (noise_v as f32 - noise_threshold) / (1. - noise_threshold);
             };
         }
 

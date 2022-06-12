@@ -103,8 +103,7 @@ impl Camera {
     }
 
     pub fn rotate(&mut self, x: f32, y: f32) {
-        let x = x.min(0.1).max(-0.1);
-        let mut y = y.min(0.1).max(-0.1);
+        let mut y = y;
 
         let front = (self.state.target - self.state.eye).normalize();
         let front = front.rotate(Vec3::unit_y(), -x);
