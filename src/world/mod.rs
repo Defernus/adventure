@@ -15,10 +15,12 @@ use crate::{
 
 use self::{
     chunk::{Chunk, CHUNK_VOXELS_SIZE},
+    generator::Generator,
     voxel::Voxel,
 };
 
 pub mod chunk;
+pub mod generator;
 pub mod voxel;
 
 pub struct World {
@@ -30,6 +32,8 @@ pub struct World {
     render_distance: usize,
     prev_player_chunk: Position,
     chunk_load_iterator: PositionAroundIterator,
+
+    generator: Generator,
 
     sun: Sun,
 }
@@ -116,6 +120,7 @@ impl World {
             camera,
             prev_player_chunk: Position::new(0, 0, 0),
             chunk_load_iterator: Position::new(0, 0, 0).iter_around(render_distance),
+            generator: Generator::new(),
         };
     }
 
@@ -145,7 +150,7 @@ impl World {
         for p in self.chunk_load_iterator {
             if self.chunks.get(&p).is_none() {
                 let mut new_chunk = Chunk::new(self, p);
-                new_chunk.generate(device);
+                new_chunk.generate(&self.generator, device);
                 self.chunks.insert(p, new_chunk);
 
                 chunk_generated.push(p.clone());

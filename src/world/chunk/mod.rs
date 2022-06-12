@@ -1,12 +1,13 @@
-use noise::NoiseFn;
 use wgpu::{util::DeviceExt, Device, RenderPass};
 
 use crate::{
     utils::{direction::Direction, position::Position, true_mod::true_mod},
+    vec::Vec3,
     vertex::Vertex,
 };
 
 use super::{
+    generator::Generator,
     voxel::{voxel_data::VoxelData, voxels_to_vertex::append_vertex, Voxel},
     World,
 };
@@ -20,10 +21,6 @@ pub struct Chunk {
     world: *mut World,
     vertex_data: Option<ChunkVertex>,
     voxels: [Voxel; CHUNK_VOXELS_VOLUME],
-
-    noise_scale: f64,
-    noise_threshold: f32,
-    simplex: noise::OpenSimplex,
 }
 
 struct ChunkVertex {
@@ -38,9 +35,6 @@ impl Chunk {
             pos: pos,
             voxels: [Voxel { value: 1., id: 0 }; CHUNK_VOXELS_VOLUME],
             vertex_data: None,
-            noise_scale: 0.03,
-            noise_threshold: 0.4,
-            simplex: noise::OpenSimplex::new(),
         }
     }
 
@@ -69,38 +63,21 @@ impl Chunk {
         return vertex;
     }
 
-    fn generate_block(&mut self, index: usize) {
+    fn generate_voxel(&mut self, generator: &Generator, index: usize) {
         let pos = Self::index_to_pos(index);
 
-        let x = (self.pos.x * CHUNK_REAL_SIZE as i64 + pos.x) as f64;
-        let y = (self.pos.y * CHUNK_REAL_SIZE as i64 + pos.y) as f64;
-        let z = (self.pos.z * CHUNK_REAL_SIZE as i64 + pos.z) as f64;
-
-        let mut noise_v = self.simplex.get([
-            x * self.noise_scale,
-            y * self.noise_scale,
-            z * self.noise_scale,
-        ]) as f32;
-        noise_v += 1.0;
-        noise_v /= 2.0;
-
-        noise_v *= 1.0 - (y as f32 / CHUNK_REAL_SIZE as f32).min(1.0).max(0.0);
-        noise_v -= self.noise_threshold;
-        noise_v /= self.noise_scale as f32;
-
-        self.voxels[index].value = noise_v / 2.;
-        if noise_v < 0. {
-            self.voxels[index].id = 0;
-        } else {
-            self.voxels[index].id = 1;
-        };
+        self.voxels[index] = generator.generate_voxel(Vec3::new(
+            (self.pos.x * CHUNK_REAL_SIZE as i64 + pos.x) as f64,
+            (self.pos.y * CHUNK_REAL_SIZE as i64 + pos.y) as f64,
+            (self.pos.z * CHUNK_REAL_SIZE as i64 + pos.z) as f64,
+        ))
     }
 
-    pub fn generate(&mut self, device: &Device) {
+    pub fn generate(&mut self, generator: &Generator, device: &Device) {
         // println!("generating chunk {:?}", self.pos);
 
         for i in 0..CHUNK_VOXELS_VOLUME {
-            let val = self.generate_block(i);
+            self.generate_voxel(generator, i);
         }
 
         let vertex = self.generate_vertex();
