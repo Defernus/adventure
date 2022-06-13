@@ -163,6 +163,12 @@ impl GameInput {
             _ => false,
         }
     }
+    pub fn is_just_pressed(&self, input: InputKey) -> bool {
+        match self.get_input_state(input) {
+            InputState::JustPressed => true,
+            _ => false,
+        }
+    }
 
     pub fn is_window_in_focus(&self) -> bool {
         return self.is_in_focus;

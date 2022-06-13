@@ -8,12 +8,11 @@ use wgpu::{include_wgsl, Device, RenderPass, RenderPipeline, SurfaceConfiguratio
 use winit::window::Window;
 
 use crate::{
-    app_state::game_state::GameSate,
-    player::camera::{state::CameraState, Camera},
+    app_state::game_state::{input::InputKey, GameSate},
+    player::Player,
     sun::Sun,
     texture,
     utils::position::{Position, PositionAroundIterator},
-    vec::Vec3,
     vertex::Vertex,
 };
 
@@ -30,13 +29,14 @@ pub mod voxel;
 pub struct World {
     chunks: collections::BTreeMap<Position, Chunk>,
     render_pipeline: RenderPipeline,
-    pub camera: Camera,
+    pub player: Player,
 
     chunk_generating_per_frame: usize,
     render_distance: usize,
     prev_player_chunk: Position,
     chunk_load_iterator: PositionAroundIterator,
 
+    generation_enabled: bool,
     generator: Arc<Generator>,
 
     sun: Sun,
@@ -49,24 +49,15 @@ impl World {
 
         let sun = Sun::new(&device);
 
-        let camera = Camera::new(
-            &device,
-            CameraState {
-                eye: (0., 0., 0.).into(),
-                target: (0., 0., -1.0).into(),
-                up: Vec3::new(0., 1., 0.),
-                aspect: config.width as f32 / config.height as f32,
-                fov_y: 70.0,
-                z_near: 0.1,
-                z_far: 1024.0,
-            },
+        let player = Player::new(
+            device,
             (screen_size.width as f32, screen_size.height as f32),
         );
 
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[camera.get_bind_group_layout(), sun.get_bind_group_layout()],
+                bind_group_layouts: &[player.get_bind_group_layout(), sun.get_bind_group_layout()],
                 push_constant_ranges: &[],
             });
 
@@ -121,7 +112,8 @@ impl World {
             chunk_generating_per_frame: 4,
             render_distance,
             render_pipeline,
-            camera,
+            player,
+            generation_enabled: true,
             prev_player_chunk: Position::new(0, 0, 0),
             chunk_load_iterator: Position::new(0, 0, 0).iter_around(render_distance),
             generator: Arc::new(Generator::new()),
@@ -137,7 +129,7 @@ impl World {
             return false;
         }
 
-        let camera_pos = self.camera.state.eye;
+        let camera_pos = self.player.get_pos();
         let player_chunk_pos = Position::new(
             (camera_pos.x / CHUNK_VOXELS_SIZE as f32) as i64,
             (camera_pos.y / CHUNK_VOXELS_SIZE as f32) as i64,
@@ -183,12 +175,7 @@ impl World {
 
     fn get_chunk_to_unload(&mut self) -> Option<Position> {
         for (chunk_pos, _chunk) in self.chunks.iter() {
-            let player_pos = self.camera.state.eye / CHUNK_VOXELS_SIZE as f32;
-            let player_pos = Position::new(
-                player_pos.x as i64,
-                player_pos.y as i64,
-                player_pos.z as i64,
-            );
+            let player_pos = self.player.get_chunk_pos();
             let delta = player_pos - chunk_pos.clone();
 
             if delta.x.abs().max(delta.y.abs()).max(delta.z.abs()) > self.render_distance as i64 + 1
@@ -214,22 +201,35 @@ impl World {
     }
 
     pub fn update(&mut self, queue: &wgpu::Queue, device: &Arc<Device>, game_state: &mut GameSate) {
-        self.load_chunk(device, game_state);
+        self.player.update(game_state);
+
+        if self.generation_enabled {
+            self.load_chunk(device, game_state);
+        }
 
         self.chunks.iter_mut().for_each(|(_pos, chunk)| {
             chunk.update();
         });
 
-        self.camera.update_uniform(queue);
+        if game_state
+            .game_input
+            .is_just_pressed(InputKey::ChunkGeneration)
+        {
+            self.generation_enabled = !self.generation_enabled;
+        }
+
+        self.player.update_uniform(queue);
         self.sun.update_uniform(queue);
 
-        self.unload_chunk(game_state);
+        if self.generation_enabled {
+            self.unload_chunk(game_state);
+        }
     }
 
     pub fn draw<'a>(self: &'a Self, render_pass: &mut RenderPass<'a>) {
         render_pass.set_pipeline(&self.render_pipeline);
 
-        render_pass.set_bind_group(0, self.camera.get_bind_group(), &[]);
+        self.player.draw(render_pass);
         render_pass.set_bind_group(1, self.sun.get_bind_group(), &[]);
 
         for (_pos, chunk) in self.chunks.iter() {
