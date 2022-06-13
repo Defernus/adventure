@@ -1,4 +1,4 @@
-use std::iter;
+use std::{iter, sync::Arc};
 use winit::{
     dpi::PhysicalPosition,
     event::{DeviceEvent, WindowEvent},
@@ -13,7 +13,7 @@ pub mod game_state;
 
 pub struct AppState {
     surface: wgpu::Surface,
-    device: wgpu::Device,
+    device: Arc<wgpu::Device>,
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
     size: winit::dpi::PhysicalSize<u32>,
@@ -50,6 +50,7 @@ impl AppState {
             )
             .await
             .unwrap();
+        let device = Arc::new(device);
 
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,

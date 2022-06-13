@@ -1,13 +1,14 @@
-use std::collections::{self, BTreeMap};
+use std::{
+    collections::{self, BTreeMap},
+    sync::Arc,
+    thread::{self, JoinHandle},
+};
 
 use wgpu::{include_wgsl, Device, RenderPass, RenderPipeline, SurfaceConfiguration};
 use winit::window::Window;
 
 use crate::{
-    app_state::game_state::{
-        input::{InputKey, InputState},
-        GameSate,
-    },
+    app_state::game_state::GameSate,
     camera::{state::CameraState, Camera},
     sun::Sun,
     texture,
@@ -36,15 +37,13 @@ pub struct World {
     prev_player_chunk: Position,
     chunk_load_iterator: PositionAroundIterator,
 
-    generation_disabled: bool,
-
-    generator: Generator,
+    generator: Arc<Generator>,
 
     sun: Sun,
 }
 
 impl World {
-    pub fn new(window: &Window, device: &Device, config: &SurfaceConfiguration) -> Self {
+    pub fn new(window: &Window, device: &Arc<Device>, config: &SurfaceConfiguration) -> Self {
         let screen_size = window.inner_size();
         let shader = device.create_shader_module(&include_wgsl!("shaders/main.wgsl"));
 
@@ -125,8 +124,7 @@ impl World {
             camera,
             prev_player_chunk: Position::new(0, 0, 0),
             chunk_load_iterator: Position::new(0, 0, 0).iter_around(render_distance),
-            generator: Generator::new(),
-            generation_disabled: false,
+            generator: Arc::new(Generator::new()),
         };
     }
 
@@ -134,7 +132,7 @@ impl World {
         (self.render_distance * 2 + 1).pow(3)
     }
 
-    fn load_chunk(&mut self, device: &Device, _game_state: &mut GameSate) -> bool {
+    fn load_chunk(&mut self, device: &Arc<Device>, _game_state: &mut GameSate) -> bool {
         if self.chunks.len() >= self.get_max_chunk() {
             return false;
         }
@@ -147,23 +145,37 @@ impl World {
         );
 
         if self.prev_player_chunk != player_chunk_pos {
-            println!("player chunk position changed, reset loading iterator");
             self.prev_player_chunk = player_chunk_pos;
             self.chunk_load_iterator = player_chunk_pos.iter_around(self.render_distance);
         }
 
+        let max_chunks = self.chunk_generating_per_frame;
         let mut chunk_generated: Vec<Position> = vec![];
+
+        let mut handles: Vec<JoinHandle<Chunk>> = vec![];
+
         for p in self.chunk_load_iterator {
             if self.chunks.get(&p).is_none() {
-                let mut new_chunk = Chunk::new(self, p);
-                new_chunk.generate(&self.generator, device);
-                self.chunks.insert(p, new_chunk);
+                let np = p.clone();
+                let gen = self.generator.clone();
+                let device = device.clone();
+
+                handles.push(thread::spawn(move || {
+                    let mut new_chunk = Chunk::new(np);
+                    new_chunk.generate(&gen, &device);
+                    return new_chunk;
+                }));
 
                 chunk_generated.push(p.clone());
-                if chunk_generated.len() >= self.chunk_generating_per_frame {
+                if chunk_generated.len() >= max_chunks {
                     break;
                 }
             }
+        }
+
+        for h in handles {
+            let chunk = h.join().unwrap();
+            self.chunks.insert(chunk.get_position(), chunk);
         }
 
         return chunk_generated.len() > 0;
@@ -201,38 +213,17 @@ impl World {
         }
     }
 
-    pub fn update(&mut self, queue: &wgpu::Queue, device: &Device, game_state: &mut GameSate) {
-        if !self.generation_disabled {
-            self.load_chunk(device, game_state);
-        }
+    pub fn update(&mut self, queue: &wgpu::Queue, device: &Arc<Device>, game_state: &mut GameSate) {
+        self.load_chunk(device, game_state);
 
         self.chunks.iter_mut().for_each(|(_pos, chunk)| {
             chunk.update();
         });
 
-        match game_state
-            .game_input
-            .get_input_state(InputKey::ChunkGeneration)
-        {
-            InputState::JustPressed => {
-                self.generation_disabled = !self.generation_disabled;
-                println!(
-                    "chunk generation {}",
-                    if self.generation_disabled {
-                        "disabled"
-                    } else {
-                        "enabled"
-                    }
-                );
-            }
-            _ => {}
-        }
         self.camera.update_uniform(queue);
         self.sun.update_uniform(queue);
 
-        if !self.generation_disabled {
-            self.unload_chunk(game_state);
-        }
+        self.unload_chunk(game_state);
     }
 
     pub fn draw<'a>(self: &'a Self, render_pass: &mut RenderPass<'a>) {

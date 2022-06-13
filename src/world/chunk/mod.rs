@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use wgpu::{util::DeviceExt, Device, RenderPass};
 
 use crate::{
@@ -9,7 +11,6 @@ use crate::{
 use super::{
     generator::Generator,
     voxel::{voxel_data::VoxelData, voxels_to_vertex::append_vertex, Voxel},
-    World,
 };
 
 pub const CHUNK_REAL_SIZE: usize = 16;
@@ -20,8 +21,6 @@ pub struct Chunk {
     pos: Position,
     vertex_data: Option<ChunkVertex>,
     voxels: [Voxel; CHUNK_VOXELS_VOLUME],
-    #[allow(dead_code)]
-    world: *mut World,
 }
 
 struct ChunkVertex {
@@ -30,9 +29,8 @@ struct ChunkVertex {
 }
 
 impl Chunk {
-    pub fn new(world: *mut World, pos: Position) -> Self {
+    pub fn new(pos: Position) -> Self {
         Self {
-            world,
             pos: pos,
             voxels: [Voxel {
                 value: 0.,
@@ -42,7 +40,7 @@ impl Chunk {
         }
     }
 
-    pub fn generate_vertex(&mut self) -> Vec<Vertex> {
+    pub fn update_mesh(&mut self, device: &Arc<Device>) {
         let mut vertex: Vec<Vertex> = Vec::new();
         for x in 0..CHUNK_REAL_SIZE {
             for y in 0..CHUNK_REAL_SIZE {
@@ -64,7 +62,21 @@ impl Chunk {
             ]
         }
 
-        return vertex;
+        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Vertex Buffer"),
+            contents: bytemuck::cast_slice(vertex.as_slice()),
+            usage: wgpu::BufferUsages::VERTEX,
+        });
+
+        match &self.vertex_data {
+            Some(data) => data.vertex_buffer.destroy(),
+            _ => {}
+        }
+
+        self.vertex_data = Some(ChunkVertex {
+            vertex,
+            vertex_buffer,
+        });
     }
 
     fn generate_voxel(&mut self, generator: &Generator, index: usize) {
@@ -77,25 +89,15 @@ impl Chunk {
         ))
     }
 
-    pub fn generate(&mut self, generator: &Generator, device: &Device) {
-        // println!("generating chunk {:?}", self.pos);
-
+    pub fn generate_voxels(&mut self, generator: &Generator) {
         for i in 0..CHUNK_VOXELS_VOLUME {
             self.generate_voxel(generator, i);
         }
+    }
 
-        let vertex = self.generate_vertex();
-
-        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Vertex Buffer"),
-            contents: bytemuck::cast_slice(vertex.as_slice()),
-            usage: wgpu::BufferUsages::VERTEX,
-        });
-
-        self.vertex_data = Some(ChunkVertex {
-            vertex,
-            vertex_buffer,
-        });
+    pub fn generate(&mut self, generator: &Generator, device: &Arc<Device>) {
+        self.generate_voxels(generator);
+        self.update_mesh(device);
     }
 
     pub fn pos_to_index(pos: Position) -> Option<usize> {
