@@ -29,13 +29,7 @@ impl AppState {
 
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
         if new_size.width > 0 && new_size.height > 0 {
-            self.game_state.game_graphics.size = new_size;
-            self.game_state.game_graphics.config.width = new_size.width;
-            self.game_state.game_graphics.config.height = new_size.height;
-            self.game_state.game_graphics.surface.configure(
-                &self.game_state.game_graphics.device,
-                &self.game_state.game_graphics.config,
-            );
+            self.game_state.game_graphics.resize(new_size);
         }
     }
 
