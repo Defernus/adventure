@@ -64,21 +64,34 @@ impl Generator {
         ]
     }
 
-    pub fn generate_voxel(&self, pos: Vec3<f64>) -> Voxel {
-        let mut color = [0.4; 3];
+    pub fn generate_voxels(&self, offset: Vec3<f64>, voxels: &mut [Voxel], size: usize) {
+        for x in 0..size {
+            for z in 0..size {
+                for y in 0..size {
+                    let pos = Vec3::new(
+                        offset.x + x as f64,
+                        offset.y + y as f64,
+                        offset.z + z as f64,
+                    );
 
-        let level = self.get_level_val(pos);
-        if level < 0.03 * self.scale {
-            color = [0.2, 0.7, 0.3];
+                    let level = self.get_level_val(pos);
+
+                    let mut color = [0.4; 3];
+
+                    if level < 0.03 * self.scale {
+                        color = [0.2, 0.7, 0.3];
+                    }
+
+                    let mut noise_v = self.get_cliffs_val(pos);
+
+                    noise_v = noise_v.min(level);
+
+                    voxels[x + y * size + z * size * size] = Voxel {
+                        color: self.randomize_color(pos, color, 0.05),
+                        value: noise_v as f32,
+                    };
+                }
+            }
         }
-
-        let mut noise_v = self.get_cliffs_val(pos);
-
-        noise_v = noise_v.min(level);
-
-        return Voxel {
-            color: self.randomize_color(pos, color, 0.05),
-            value: noise_v as f32,
-        };
     }
 }

@@ -79,20 +79,14 @@ impl Chunk {
         });
     }
 
-    fn generate_voxel(&mut self, generator: &Generator, index: usize) {
-        let pos = Self::index_to_pos(index);
-
-        self.voxels[index] = generator.generate_voxel(Vec3::new(
-            (self.pos.x * CHUNK_REAL_SIZE as i64 + pos.x) as f64,
-            (self.pos.y * CHUNK_REAL_SIZE as i64 + pos.y) as f64,
-            (self.pos.z * CHUNK_REAL_SIZE as i64 + pos.z) as f64,
-        ))
-    }
-
     pub fn generate_voxels(&mut self, generator: &Generator) {
-        for i in 0..CHUNK_VOXELS_VOLUME {
-            self.generate_voxel(generator, i);
-        }
+        let offset = Vec3::new(
+            (self.pos.x * CHUNK_REAL_SIZE as i64) as f64,
+            (self.pos.y * CHUNK_REAL_SIZE as i64) as f64,
+            (self.pos.z * CHUNK_REAL_SIZE as i64) as f64,
+        );
+
+        generator.generate_voxels(offset, &mut self.voxels, CHUNK_VOXELS_SIZE)
     }
 
     pub fn generate(&mut self, generator: &Generator, device: &Arc<Device>) {
