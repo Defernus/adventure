@@ -4,21 +4,24 @@ use winit::{
     window::Window,
 };
 
-use self::{input::GameInput, time::GameTime};
+use self::{graphics::GameGraphics, input::GameInput, time::GameTime};
 
+pub mod graphics;
 pub mod input;
 pub mod time;
 
 pub struct GameSate {
     pub game_input: GameInput,
     pub game_time: GameTime,
+    pub game_graphics: GameGraphics,
 }
 
 impl GameSate {
-    pub(super) fn new() -> Self {
+    pub(super) async fn new(window: &Window) -> Self {
         Self {
             game_input: GameInput::new(),
             game_time: GameTime::new(),
+            game_graphics: GameGraphics::new(window).await,
         }
     }
 

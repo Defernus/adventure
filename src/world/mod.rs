@@ -4,7 +4,7 @@ use std::{
     thread::{self, JoinHandle},
 };
 
-use wgpu::{include_wgsl, Device, RenderPass, RenderPipeline, SurfaceConfiguration};
+use wgpu::{include_wgsl, RenderPass, RenderPipeline};
 use winit::window::Window;
 
 use crate::{
@@ -44,64 +44,70 @@ pub struct World {
 }
 
 impl World {
-    pub fn new(window: &Window, device: &Arc<Device>, config: &SurfaceConfiguration) -> Self {
+    pub fn new(window: &Window, game_state: &GameSate) -> Self {
         let screen_size = window.inner_size();
-        let shader = device.create_shader_module(&include_wgsl!("shaders/main.wgsl"));
+        let shader = game_state
+            .game_graphics
+            .device
+            .create_shader_module(&include_wgsl!("shaders/main.wgsl"));
 
-        let sun = Sun::new(&device);
+        let sun = Sun::new(&game_state.game_graphics.device);
 
         let player = Player::new(
-            device,
+            &game_state.game_graphics.device,
             (screen_size.width as f32, screen_size.height as f32),
         );
 
-        let render_pipeline_layout =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        let render_pipeline_layout = game_state.game_graphics.device.create_pipeline_layout(
+            &wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
                 bind_group_layouts: &[player.get_bind_group_layout(), sun.get_bind_group_layout()],
                 push_constant_ranges: &[],
-            });
+            },
+        );
 
-        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("Render Pipeline"),
-            layout: Some(&render_pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &shader,
-                entry_point: "vs_main",
-                buffers: &[Vertex::get_description()],
+        let render_pipeline = game_state.game_graphics.device.create_render_pipeline(
+            &wgpu::RenderPipelineDescriptor {
+                label: Some("Render Pipeline"),
+                layout: Some(&render_pipeline_layout),
+                vertex: wgpu::VertexState {
+                    module: &shader,
+                    entry_point: "vs_main",
+                    buffers: &[Vertex::get_description()],
+                },
+                fragment: Some(wgpu::FragmentState {
+                    module: &shader,
+                    entry_point: "fs_main",
+                    targets: &[wgpu::ColorTargetState {
+                        format: game_state.game_graphics.config.format,
+                        blend: Some(wgpu::BlendState::REPLACE),
+                        write_mask: wgpu::ColorWrites::ALL,
+                    }],
+                }),
+                primitive: wgpu::PrimitiveState {
+                    topology: wgpu::PrimitiveTopology::TriangleList,
+                    strip_index_format: None,
+                    front_face: wgpu::FrontFace::Ccw,
+                    cull_mode: Some(wgpu::Face::Back),
+                    polygon_mode: wgpu::PolygonMode::Fill,
+                    unclipped_depth: false,
+                    conservative: false,
+                },
+                depth_stencil: Some(wgpu::DepthStencilState {
+                    format: texture::Texture::DEPTH_FORMAT,
+                    depth_write_enabled: true,
+                    depth_compare: wgpu::CompareFunction::Less, // 1.
+                    stencil: wgpu::StencilState::default(),     // 2.
+                    bias: wgpu::DepthBiasState::default(),
+                }),
+                multisample: wgpu::MultisampleState {
+                    count: 1,
+                    mask: !0,
+                    alpha_to_coverage_enabled: false,
+                },
+                multiview: None,
             },
-            fragment: Some(wgpu::FragmentState {
-                module: &shader,
-                entry_point: "fs_main",
-                targets: &[wgpu::ColorTargetState {
-                    format: config.format,
-                    blend: Some(wgpu::BlendState::REPLACE),
-                    write_mask: wgpu::ColorWrites::ALL,
-                }],
-            }),
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList,
-                strip_index_format: None,
-                front_face: wgpu::FrontFace::Ccw,
-                cull_mode: Some(wgpu::Face::Back),
-                polygon_mode: wgpu::PolygonMode::Fill,
-                unclipped_depth: false,
-                conservative: false,
-            },
-            depth_stencil: Some(wgpu::DepthStencilState {
-                format: texture::Texture::DEPTH_FORMAT,
-                depth_write_enabled: true,
-                depth_compare: wgpu::CompareFunction::Less, // 1.
-                stencil: wgpu::StencilState::default(),     // 2.
-                bias: wgpu::DepthBiasState::default(),
-            }),
-            multisample: wgpu::MultisampleState {
-                count: 1,
-                mask: !0,
-                alpha_to_coverage_enabled: false,
-            },
-            multiview: None,
-        });
+        );
 
         let chunks = BTreeMap::new();
 
@@ -125,7 +131,7 @@ impl World {
         (self.render_distance * 2 + 1).pow(3)
     }
 
-    fn load_chunk(&mut self, device: &Arc<Device>, _game_state: &mut GameSate) -> bool {
+    fn load_chunk(&mut self, game_state: &mut GameSate) -> bool {
         if self.chunks.len() >= self.get_max_chunk() {
             return false;
         }
@@ -151,7 +157,7 @@ impl World {
             if self.chunks.get(&p).is_none() {
                 let np = p.clone();
                 let gen = self.generator.clone();
-                let device = device.clone();
+                let device = game_state.game_graphics.device.clone();
 
                 handles.push(thread::spawn(move || {
                     let mut new_chunk = Chunk::new(np);
@@ -239,7 +245,7 @@ impl World {
         None
     }
 
-    pub fn mine(&mut self, device: &Arc<Device>, game_state: &mut GameSate) -> Option<()> {
+    pub fn mine(&mut self, game_state: &mut GameSate) -> Option<()> {
         let dt = game_state.game_time.get_delta_time();
         let pos = self.player.get_pos();
         let dir = self.player.get_look_dir();
@@ -252,20 +258,20 @@ impl World {
                 Some(chunk) => chunk,
                 _ => {
                     let mut chunk = Chunk::new(chunk_pos.clone());
-                    chunk.generate(&self.generator, device);
+                    chunk.generate(&self.generator, &game_state.game_graphics.device);
                     self.chunks.insert(chunk_pos.clone(), chunk);
                     self.chunks.get_mut(&chunk_pos)?
                 }
             };
             let modified_voxels = chunk.dig(pos, 6., dt / 20.);
             if modified_voxels > 0 {
-                chunk.update_mesh(device);
+                chunk.update_mesh(&game_state.game_graphics.device);
             }
         }
         return Some(());
     }
 
-    pub fn fill(&mut self, device: &Arc<Device>, game_state: &mut GameSate) -> Option<()> {
+    pub fn fill(&mut self, game_state: &mut GameSate) -> Option<()> {
         let dt = game_state.game_time.get_delta_time();
         let pos = self.player.get_pos();
         let dir = self.player.get_look_dir();
@@ -278,35 +284,35 @@ impl World {
                 Some(chunk) => chunk,
                 _ => {
                     let mut chunk = Chunk::new(chunk_pos.clone());
-                    chunk.generate(&self.generator, device);
+                    chunk.generate(&self.generator, &game_state.game_graphics.device);
                     self.chunks.insert(chunk_pos.clone(), chunk);
                     self.chunks.get_mut(&chunk_pos)?
                 }
             };
             let modified_voxels = chunk.fill(pos, 6., voxel, dt / 20.);
             if modified_voxels > 0 {
-                chunk.update_mesh(device);
+                chunk.update_mesh(&game_state.game_graphics.device);
             }
         }
         return Some(());
     }
 
-    pub fn process_input(&mut self, device: &Arc<Device>, game_state: &mut GameSate) {
+    pub fn process_input(&mut self, game_state: &mut GameSate) {
         if game_state.game_input.is_pressed(InputKey::Mine) {
-            self.mine(device, game_state);
+            self.mine(game_state);
         } else if game_state.game_input.is_pressed(InputKey::Fill) {
-            self.fill(device, game_state);
+            self.fill(game_state);
         }
     }
 
-    pub fn update(&mut self, queue: &wgpu::Queue, device: &Arc<Device>, game_state: &mut GameSate) {
+    pub fn update(&mut self, game_state: &mut GameSate) {
         self.player.update(game_state);
 
         if self.generation_enabled {
-            self.load_chunk(device, game_state);
+            self.load_chunk(game_state);
         }
 
-        self.process_input(device, game_state);
+        self.process_input(game_state);
 
         self.chunks.iter_mut().for_each(|(_pos, chunk)| {
             chunk.update();
@@ -319,8 +325,8 @@ impl World {
             self.generation_enabled = !self.generation_enabled;
         }
 
-        self.player.update_uniform(queue);
-        self.sun.update_uniform(queue);
+        self.player.update_uniform(&game_state.game_graphics.queue);
+        self.sun.update_uniform(&game_state.game_graphics.queue);
 
         if self.generation_enabled {
             self.unload_chunk(game_state);
