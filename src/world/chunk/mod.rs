@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
-use wgpu::{util::DeviceExt, Device, RenderPass};
+use wgpu::{Device, RenderPass};
 
 use crate::{
-    app_state::game_state::graphics::vertex::Vertex,
+    app_state::game_state::graphics::{mesh::Mesh, vertex::Vertex},
     utils::{direction::Direction, position::Position, true_mod::true_mod},
     vec::Vec3,
 };
@@ -19,13 +19,8 @@ pub const CHUNK_VOXELS_VOLUME: usize = CHUNK_VOXELS_SIZE * CHUNK_VOXELS_SIZE * C
 
 pub struct Chunk {
     pos: Position,
-    vertex_data: Option<ChunkVertex>,
+    mesh: Option<Mesh>,
     voxels: [Voxel; CHUNK_VOXELS_VOLUME],
-}
-
-struct ChunkVertex {
-    vertex: Vec<Vertex>,
-    vertex_buffer: wgpu::Buffer,
 }
 
 impl Chunk {
@@ -36,7 +31,7 @@ impl Chunk {
                 value: 0.,
                 color: [0.; 3],
             }; CHUNK_VOXELS_VOLUME],
-            vertex_data: None,
+            mesh: None,
         }
     }
 
@@ -62,21 +57,12 @@ impl Chunk {
             ]
         }
 
-        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Vertex Buffer"),
-            contents: bytemuck::cast_slice(vertex.as_slice()),
-            usage: wgpu::BufferUsages::VERTEX,
-        });
-
-        match &self.vertex_data {
-            Some(data) => data.vertex_buffer.destroy(),
+        match &self.mesh {
+            Some(mesh) => mesh.destroy(),
             _ => {}
         }
 
-        self.vertex_data = Some(ChunkVertex {
-            vertex,
-            vertex_buffer,
-        });
+        self.mesh = Some(Mesh::new(vertex, device));
     }
 
     pub fn generate_voxels(&mut self, generator: &Generator) {
@@ -267,11 +253,8 @@ impl Chunk {
     pub fn update(&self) {}
 
     pub fn draw<'a>(self: &'a Self, render_pass: &mut RenderPass<'a>) {
-        match self.vertex_data.as_ref() {
-            Some(vertex_data) => {
-                render_pass.set_vertex_buffer(0, vertex_data.vertex_buffer.slice(..));
-                render_pass.draw(0..vertex_data.vertex.len() as u32, 0..1);
-            }
+        match self.mesh.as_ref() {
+            Some(mesh) => mesh.draw(render_pass),
             _ => {}
         }
     }
