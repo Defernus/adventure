@@ -156,6 +156,28 @@ impl Chunk {
         }
     }
 
+    pub fn fill(&mut self, center: Position, radius: f32, voxel: Voxel, value: f32) -> usize {
+        let mut count: usize = 0;
+
+        for i in 0..CHUNK_VOXELS_VOLUME {
+            let pos = Self::index_to_pos(i) + self.pos.mul_scalar(CHUNK_REAL_SIZE as i64) - center;
+
+            let vec = Vec3::new(pos.x as f32, pos.y as f32, pos.z as f32);
+            let l = vec.length();
+
+            if l < radius && self.voxels[i].value < 0. {
+                count += 1;
+                self.voxels[i].value = self.voxels[i].value.max(-0.1);
+                self.voxels[i].value = self.voxels[i].value + value * ((radius - l) / radius);
+                self.voxels[i].value = self.voxels[i].value.min(1.0);
+
+                self.voxels[i].color = voxel.color;
+            }
+        }
+
+        return count;
+    }
+
     pub fn dig(&mut self, center: Position, radius: f32, value: f32) -> usize {
         let mut count: usize = 0;
 
@@ -168,6 +190,7 @@ impl Chunk {
             if l < radius && self.voxels[i].value >= 0. {
                 count += 1;
                 self.voxels[i].value -= value * (radius - l) / radius;
+                self.voxels[i].value = self.voxels[i].value.max(-0.1);
             }
         }
 

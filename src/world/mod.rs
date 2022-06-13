@@ -201,7 +201,12 @@ impl World {
         }
     }
 
-    pub fn cast_ray(&self, from: Vec3<f32>, dir: Vec3<f32>, max_dist: f32) -> Option<Position> {
+    pub fn cast_ray(
+        &self,
+        from: Vec3<f32>,
+        dir: Vec3<f32>,
+        max_dist: f32,
+    ) -> Option<(Position, Voxel)> {
         let step_size: f32 = 0.01;
         let mut ray_len: f32 = 0.;
 
@@ -217,9 +222,9 @@ impl World {
 
             if voxel.value > 0. {
                 println!("{} {:?} {:?}", ray_len, in_chunk_pos, pos);
-                return Some(
-                    in_chunk_pos + chunk.get_position().mul_scalar(CHUNK_REAL_SIZE as i64),
-                );
+                let result_pos =
+                    in_chunk_pos + chunk.get_position().mul_scalar(CHUNK_REAL_SIZE as i64);
+                return Some((result_pos, voxel));
             }
 
             let new_chunk_pos = Self::get_chunk_cord_by_vec(pos);
@@ -234,33 +239,64 @@ impl World {
         None
     }
 
-    pub fn process_input(&mut self, device: &Arc<Device>, game_state: &mut GameSate) -> Option<()> {
-        if game_state.game_input.is_pressed(InputKey::Mine) {
-            let dt = game_state.game_time.get_delta_time();
-            let pos = self.player.get_pos();
-            let dir = self.player.get_look_dir();
+    pub fn mine(&mut self, device: &Arc<Device>, game_state: &mut GameSate) -> Option<()> {
+        let dt = game_state.game_time.get_delta_time();
+        let pos = self.player.get_pos();
+        let dir = self.player.get_look_dir();
 
-            let pos = self.cast_ray(pos, dir, 32.)?;
+        let pos = self.cast_ray(pos, dir, 32.)?.0;
 
-            let chunks_to_dig = Chunk::get_chunk_pos(pos).iter_neighbors(true);
-            for chunk_pos in chunks_to_dig {
-                let chunk = match self.get_chunk_mut(chunk_pos) {
-                    Some(chunk) => chunk,
-                    _ => {
-                        let mut chunk = Chunk::new(chunk_pos.clone());
-                        chunk.generate(&self.generator, device);
-                        self.chunks.insert(chunk_pos.clone(), chunk);
-                        self.chunks.get_mut(&chunk_pos)?
-                    }
-                };
-                let modified_voxels = chunk.dig(pos, 6., dt / 20.);
-                if modified_voxels > 0 {
-                    chunk.update_mesh(device);
+        let chunks_to_dig = Chunk::get_chunk_pos(pos).iter_neighbors(true);
+        for chunk_pos in chunks_to_dig {
+            let chunk = match self.get_chunk_mut(chunk_pos) {
+                Some(chunk) => chunk,
+                _ => {
+                    let mut chunk = Chunk::new(chunk_pos.clone());
+                    chunk.generate(&self.generator, device);
+                    self.chunks.insert(chunk_pos.clone(), chunk);
+                    self.chunks.get_mut(&chunk_pos)?
                 }
+            };
+            let modified_voxels = chunk.dig(pos, 6., dt / 20.);
+            if modified_voxels > 0 {
+                chunk.update_mesh(device);
             }
-            return Some(());
         }
-        None
+        return Some(());
+    }
+
+    pub fn fill(&mut self, device: &Arc<Device>, game_state: &mut GameSate) -> Option<()> {
+        let dt = game_state.game_time.get_delta_time();
+        let pos = self.player.get_pos();
+        let dir = self.player.get_look_dir();
+
+        let (pos, voxel) = self.cast_ray(pos, dir, 32.)?;
+
+        let chunks_to_dig = Chunk::get_chunk_pos(pos).iter_neighbors(true);
+        for chunk_pos in chunks_to_dig {
+            let chunk = match self.get_chunk_mut(chunk_pos) {
+                Some(chunk) => chunk,
+                _ => {
+                    let mut chunk = Chunk::new(chunk_pos.clone());
+                    chunk.generate(&self.generator, device);
+                    self.chunks.insert(chunk_pos.clone(), chunk);
+                    self.chunks.get_mut(&chunk_pos)?
+                }
+            };
+            let modified_voxels = chunk.fill(pos, 6., voxel, dt / 20.);
+            if modified_voxels > 0 {
+                chunk.update_mesh(device);
+            }
+        }
+        return Some(());
+    }
+
+    pub fn process_input(&mut self, device: &Arc<Device>, game_state: &mut GameSate) {
+        if game_state.game_input.is_pressed(InputKey::Mine) {
+            self.mine(device, game_state);
+        } else if game_state.game_input.is_pressed(InputKey::Fill) {
+            self.fill(device, game_state);
+        }
     }
 
     pub fn update(&mut self, queue: &wgpu::Queue, device: &Arc<Device>, game_state: &mut GameSate) {

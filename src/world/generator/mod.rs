@@ -88,7 +88,7 @@ impl Generator {
 
                     voxels[x + y * size + z * size * size] = Voxel {
                         color: self.randomize_color(pos, color, 0.05),
-                        value: noise_v.max(-1.).min(1.) as f32,
+                        value: noise_v.max(-0.1).min(1.) as f32,
                     };
                 }
             }

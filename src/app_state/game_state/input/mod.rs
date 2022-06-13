@@ -21,6 +21,7 @@ pub enum InputKey {
     CursorFree,
     ChunkGeneration,
     Mine,
+    Fill,
 }
 
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -145,6 +146,7 @@ impl GameInput {
     fn buttons_action(&mut self, key: &MouseButton, pressed: bool) -> bool {
         match key {
             MouseButton::Left => self.handle_key_action(InputKey::Mine, pressed),
+            MouseButton::Right => self.handle_key_action(InputKey::Fill, pressed),
             _ => false,
         }
     }
