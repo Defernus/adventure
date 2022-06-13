@@ -19,6 +19,7 @@ pub enum InputKey {
     MoveDown,
     FastMove,
     CursorFree,
+    ChunkGeneration,
 }
 
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -147,6 +148,7 @@ impl GameInput {
             VirtualKeyCode::Space => self.handle_key_action(InputKey::MoveUp, pressed),
             VirtualKeyCode::Q => self.handle_key_action(InputKey::CursorFree, pressed),
             VirtualKeyCode::LShift => self.handle_key_action(InputKey::FastMove, pressed),
+            VirtualKeyCode::G => self.handle_key_action(InputKey::ChunkGeneration, pressed),
             _ => false,
         }
     }

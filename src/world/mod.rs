@@ -4,7 +4,10 @@ use wgpu::{include_wgsl, Device, RenderPass, RenderPipeline, SurfaceConfiguratio
 use winit::window::Window;
 
 use crate::{
-    app_state::game_state::GameSate,
+    app_state::game_state::{
+        input::{InputKey, InputState},
+        GameSate,
+    },
     camera::{state::CameraState, Camera},
     sun::Sun,
     texture,
@@ -32,6 +35,8 @@ pub struct World {
     render_distance: usize,
     prev_player_chunk: Position,
     chunk_load_iterator: PositionAroundIterator,
+
+    generation_disabled: bool,
 
     generator: Generator,
 
@@ -121,6 +126,7 @@ impl World {
             prev_player_chunk: Position::new(0, 0, 0),
             chunk_load_iterator: Position::new(0, 0, 0).iter_around(render_distance),
             generator: Generator::new(),
+            generation_disabled: false,
         };
     }
 
@@ -196,16 +202,37 @@ impl World {
     }
 
     pub fn update(&mut self, queue: &wgpu::Queue, device: &Device, game_state: &mut GameSate) {
-        self.load_chunk(device, game_state);
+        if !self.generation_disabled {
+            self.load_chunk(device, game_state);
+        }
 
         self.chunks.iter_mut().for_each(|(_pos, chunk)| {
             chunk.update();
         });
 
+        match game_state
+            .game_input
+            .get_input_state(InputKey::ChunkGeneration)
+        {
+            InputState::JustPressed => {
+                self.generation_disabled = !self.generation_disabled;
+                println!(
+                    "chunk generation {}",
+                    if self.generation_disabled {
+                        "disabled"
+                    } else {
+                        "enabled"
+                    }
+                );
+            }
+            _ => {}
+        }
         self.camera.update_uniform(queue);
         self.sun.update_uniform(queue);
 
-        self.unload_chunk(game_state);
+        if !self.generation_disabled {
+            self.unload_chunk(game_state);
+        }
     }
 
     pub fn draw<'a>(self: &'a Self, render_pass: &mut RenderPass<'a>) {

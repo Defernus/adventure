@@ -72,7 +72,10 @@ type VoxelsBlock = [[[Voxel; 2]; 2]; 2];
 fn get_voxel(chunk: &Chunk, pos: Position) -> Voxel {
     match chunk.get_voxel(pos) {
         Some(voxel) => voxel,
-        _ => Voxel { id: 0, value: 0. },
+        _ => Voxel {
+            value: 0.,
+            color: [0.; 3],
+        },
     }
 }
 
@@ -103,23 +106,29 @@ fn get_voxels_for_vertex(chunk: &Chunk, base_pos: Position) -> VoxelsBlock {
 }
 
 fn chose_voxel_for_node(a: Voxel, b: Voxel) -> Voxel {
-    if a.id == 0 {
+    if a.value < 0. {
         return Voxel {
-            id: b.id,
+            color: b.color,
             value: (-a.value) / (b.value - a.value),
         };
     }
-    if b.id == 0 {
+    if b.value < 0. {
         return Voxel {
-            id: a.id,
+            color: a.color,
             value: 1.0 - (-b.value) / (a.value - b.value),
         };
     }
-    return Voxel { id: 0, value: 0. };
+    return Voxel {
+        value: 0.,
+        color: [0.; 3],
+    };
 }
 
 fn get_vertex_nodes(voxels: VoxelsBlock) -> Nodes {
-    let mut result: Nodes = [Voxel { id: 0, value: 0. }; NODES_POS_COUNT];
+    let mut result: Nodes = [Voxel {
+        value: 0.,
+        color: [0.; 3],
+    }; NODES_POS_COUNT];
 
     result[DS.index] = chose_voxel_for_node(voxels[0][0][0], voxels[1][0][0]);
     result[DE.index] = chose_voxel_for_node(voxels[1][0][0], voxels[1][0][1]);
@@ -161,39 +170,35 @@ fn append_triangle(
     b: VertexNode,
     c: VertexNode,
 ) {
-    let a_v = nodes[a.index].value;
-    let b_v = nodes[b.index].value;
-    let c_v = nodes[c.index].value;
+    let a_v = nodes[a.index];
+    let b_v = nodes[b.index];
+    let c_v = nodes[c.index];
 
-    if a_v < 0. || a_v < 0. || c_v < 0. {
+    if a_v.value < 0. || a_v.value < 0. || c_v.value < 0. {
         return;
     }
 
     let pos_vec = Vec3::new(pos.x as f32, pos.y as f32, pos.z as f32);
 
-    let a_pos = shift_node_pos(a.pos, a_v) + pos_vec;
-    let b_pos = shift_node_pos(b.pos, b_v) + pos_vec;
-    let c_pos = shift_node_pos(c.pos, c_v) + pos_vec;
-
-    let a_color: [f32; 3] = [0.9; 3];
-    let b_color: [f32; 3] = [0.9; 3];
-    let c_color: [f32; 3] = [0.9; 3];
+    let a_pos = shift_node_pos(a.pos, a_v.value) + pos_vec;
+    let b_pos = shift_node_pos(b.pos, b_v.value) + pos_vec;
+    let c_pos = shift_node_pos(c.pos, c_v.value) + pos_vec;
 
     let normal_vec = (c_pos - a_pos).cross(b_pos - a_pos).normalize();
     let normal: [f32; 3] = [normal_vec.x, normal_vec.y, normal_vec.z];
 
     vertex.push(Vertex {
-        color: a_color,
+        color: a_v.color,
         normal,
         position: c_pos.to_arr(),
     });
     vertex.push(Vertex {
-        color: b_color,
+        color: a_v.color,
         normal,
         position: b_pos.to_arr(),
     });
     vertex.push(Vertex {
-        color: c_color,
+        color: a_v.color,
         normal,
         position: a_pos.to_arr(),
     });

@@ -266,29 +266,29 @@ pub const TABLE: [[isize; 16]; 256] = [
 pub fn get_index_by_voxels(voxels: [[[Voxel; 2]; 2]; 2]) -> usize {
     let mut index: usize = 0;
 
-    if voxels[0][0][1].id != 0 {
+    if voxels[0][0][1].value >= 0. {
         index |= 1 << 0;
     }
-    if voxels[1][0][1].id != 0 {
+    if voxels[1][0][1].value >= 0. {
         index |= 1 << 1;
     }
-    if voxels[1][0][0].id != 0 {
+    if voxels[1][0][0].value >= 0. {
         index |= 1 << 2;
     }
-    if voxels[0][0][0].id != 0 {
+    if voxels[0][0][0].value >= 0. {
         index |= 1 << 3;
     }
 
-    if voxels[0][1][1].id != 0 {
+    if voxels[0][1][1].value >= 0. {
         index |= 1 << 4;
     }
-    if voxels[1][1][1].id != 0 {
+    if voxels[1][1][1].value >= 0. {
         index |= 1 << 5;
     }
-    if voxels[1][1][0].id != 0 {
+    if voxels[1][1][0].value >= 0. {
         index |= 1 << 6;
     }
-    if voxels[0][1][0].id != 0 {
+    if voxels[0][1][0].value >= 0. {
         index |= 1 << 7;
     }
 

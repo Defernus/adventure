@@ -18,9 +18,10 @@ pub const CHUNK_VOXELS_VOLUME: usize = CHUNK_VOXELS_SIZE * CHUNK_VOXELS_SIZE * C
 
 pub struct Chunk {
     pos: Position,
-    world: *mut World,
     vertex_data: Option<ChunkVertex>,
     voxels: [Voxel; CHUNK_VOXELS_VOLUME],
+    #[allow(dead_code)]
+    world: *mut World,
 }
 
 struct ChunkVertex {
@@ -33,7 +34,10 @@ impl Chunk {
         Self {
             world,
             pos: pos,
-            voxels: [Voxel { value: 1., id: 0 }; CHUNK_VOXELS_VOLUME],
+            voxels: [Voxel {
+                value: 0.,
+                color: [0.; 3],
+            }; CHUNK_VOXELS_VOLUME],
             vertex_data: None,
         }
     }

@@ -43,7 +43,8 @@ fn vs_main(
 
 // Fragment shader
 
-let GAMMA_POW: f32 = 0.454545455;
+// let GAMMA_POW: f32 = 0.454545455;
+let GAMMA_POW: f32 = 1.0;
 
 [[stage(fragment)]]
 fn fs_main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
