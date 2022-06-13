@@ -105,11 +105,19 @@ impl Chunk {
         );
     }
 
+    fn cord_to_chunk_cord(v: i64) -> i64 {
+        if v < 0 {
+            return v / CHUNK_REAL_SIZE as i64 - 1;
+        } else {
+            return v / CHUNK_REAL_SIZE as i64;
+        }
+    }
+
     pub fn get_chunk_pos(pos: Position) -> Position {
         Position::new(
-            pos.x / CHUNK_REAL_SIZE as i64,
-            pos.y / CHUNK_REAL_SIZE as i64,
-            pos.z / CHUNK_REAL_SIZE as i64,
+            Self::cord_to_chunk_cord(pos.x),
+            Self::cord_to_chunk_cord(pos.y),
+            Self::cord_to_chunk_cord(pos.z),
         )
     }
     pub fn get_in_chunk_pos(pos: Position) -> Position {
@@ -146,6 +154,24 @@ impl Chunk {
                 return false;
             }
         }
+    }
+
+    pub fn dig(&mut self, center: Position, radius: f32, value: f32) -> usize {
+        let mut count: usize = 0;
+
+        for i in 0..CHUNK_VOXELS_VOLUME {
+            let pos = Self::index_to_pos(i) + self.pos.mul_scalar(CHUNK_REAL_SIZE as i64) - center;
+
+            let vec = Vec3::new(pos.x as f32, pos.y as f32, pos.z as f32);
+            let l = vec.length();
+
+            if l < radius && self.voxels[i].value >= 0. {
+                count += 1;
+                self.voxels[i].value -= value * (radius - l) / radius;
+            }
+        }
+
+        return count;
     }
 
     pub fn get_voxel(&self, in_chunk_position: Position) -> Option<Voxel> {

@@ -40,6 +40,10 @@ impl Player {
         self.cam.state.eye
     }
 
+    pub fn get_look_dir(&self) -> Vec3<f32> {
+        (self.cam.state.target - self.get_pos()).normalize()
+    }
+
     pub fn draw<'a>(self: &'a Self, render_pass: &mut RenderPass<'a>) {
         render_pass.set_bind_group(0, self.cam.get_bind_group(), &[]);
     }

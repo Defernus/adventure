@@ -18,6 +18,20 @@ impl<T> Vec3<T> {
 
 impl<T> Vec3<T>
 where
+    T: Clone,
+    T: Mul<Output = T>,
+{
+    pub fn mul_scalar(&self, val: T) -> Self {
+        Self::new(
+            self.x.clone() * val.clone(),
+            self.y.clone() * val.clone(),
+            self.z.clone() * val.clone(),
+        )
+    }
+}
+
+impl<T> Vec3<T>
+where
     T: Copy,
 {
     pub fn to_arr(&self) -> [T; 3] {

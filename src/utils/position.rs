@@ -54,8 +54,8 @@ impl Position {
     pub fn iter_around(&self, radius: usize) -> PositionAroundIterator {
         PositionAroundIterator::new(self.clone(), radius)
     }
-    pub fn iter_neighbors(&self) -> PositionIterNeighbors {
-        PositionIterNeighbors::new(self.clone())
+    pub fn iter_neighbors(&self, include_self: bool) -> PositionIterNeighbors {
+        PositionIterNeighbors::new(self.clone(), include_self)
     }
 }
 
@@ -125,15 +125,17 @@ pub struct PositionIterNeighbors {
     y: i64,
     z: i64,
     pos: Position,
+    include_self: bool,
 }
 
 impl PositionIterNeighbors {
-    pub fn new(pos: Position) -> Self {
+    pub fn new(pos: Position, include_self: bool) -> Self {
         Self {
             x: -1,
             y: -1,
             z: -1,
             pos,
+            include_self,
         }
     }
 }
@@ -159,7 +161,7 @@ impl Iterator for PositionIterNeighbors {
                 self.y = -1;
                 self.z += 1;
             }
-        } else if self.x == 0 && self.y == 0 && self.z == 0 {
+        } else if !self.include_self && self.x == 0 && self.y == 0 && self.z == 0 {
             self.x += 1;
         }
 

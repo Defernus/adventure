@@ -1,7 +1,7 @@
 use strum::EnumCount;
 use strum_macros::{EnumCount as EnumCountMacro, EnumIter};
 use winit::{
-    event::{DeviceEvent, ElementState, KeyboardInput, VirtualKeyCode, WindowEvent},
+    event::{DeviceEvent, ElementState, KeyboardInput, MouseButton, VirtualKeyCode, WindowEvent},
     window::Window,
 };
 
@@ -20,6 +20,7 @@ pub enum InputKey {
     FastMove,
     CursorFree,
     ChunkGeneration,
+    Mine,
 }
 
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -68,6 +69,9 @@ impl GameInput {
                     },
                 ..
             } => self.keys_action(key, state == &ElementState::Pressed),
+            WindowEvent::MouseInput { state, button, .. } => {
+                self.buttons_action(button, state == &ElementState::Pressed)
+            }
             WindowEvent::CursorMoved { position, .. } => {
                 self.mouse.handle_move(position.x as f32, position.y as f32)
             }
@@ -135,6 +139,13 @@ impl GameInput {
         match press {
             true => self.press_key(key),
             false => self.release_key(key),
+        }
+    }
+
+    fn buttons_action(&mut self, key: &MouseButton, pressed: bool) -> bool {
+        match key {
+            MouseButton::Left => self.handle_key_action(InputKey::Mine, pressed),
+            _ => false,
         }
     }
 

@@ -13,11 +13,12 @@ use crate::{
     sun::Sun,
     texture,
     utils::position::{Position, PositionAroundIterator},
+    vec::Vec3,
     vertex::Vertex,
 };
 
 use self::{
-    chunk::{Chunk, CHUNK_VOXELS_SIZE},
+    chunk::{Chunk, CHUNK_REAL_SIZE, CHUNK_VOXELS_SIZE},
     generator::Generator,
     voxel::Voxel,
 };
@@ -200,12 +201,76 @@ impl World {
         }
     }
 
+    pub fn cast_ray(&self, from: Vec3<f32>, dir: Vec3<f32>, max_dist: f32) -> Option<Position> {
+        let step_size: f32 = 0.01;
+        let mut ray_len: f32 = 0.;
+
+        let mut chunk = self.get_chunk_by_vec(from)?;
+        println!("start {:?} {:?} {:?}", from, dir, chunk.get_position());
+
+        while ray_len < max_dist {
+            let pos = from + dir.mul_scalar(ray_len);
+
+            let in_chunk_pos =
+                Chunk::get_in_chunk_pos(Position::new(pos.x as i64, pos.y as i64, pos.z as i64));
+            let voxel = chunk.get_voxel(in_chunk_pos)?;
+
+            if voxel.value > 0. {
+                println!("{} {:?} {:?}", ray_len, in_chunk_pos, pos);
+                return Some(
+                    in_chunk_pos + chunk.get_position().mul_scalar(CHUNK_REAL_SIZE as i64),
+                );
+            }
+
+            let new_chunk_pos = Self::get_chunk_cord_by_vec(pos);
+
+            if new_chunk_pos != chunk.get_position() {
+                chunk = self.get_chunk(new_chunk_pos)?;
+            };
+
+            ray_len += step_size;
+        }
+
+        None
+    }
+
+    pub fn process_input(&mut self, device: &Arc<Device>, game_state: &mut GameSate) -> Option<()> {
+        if game_state.game_input.is_pressed(InputKey::Mine) {
+            let dt = game_state.game_time.get_delta_time();
+            let pos = self.player.get_pos();
+            let dir = self.player.get_look_dir();
+
+            let pos = self.cast_ray(pos, dir, 32.)?;
+
+            let chunks_to_dig = Chunk::get_chunk_pos(pos).iter_neighbors(true);
+            for chunk_pos in chunks_to_dig {
+                let chunk = match self.get_chunk_mut(chunk_pos) {
+                    Some(chunk) => chunk,
+                    _ => {
+                        let mut chunk = Chunk::new(chunk_pos.clone());
+                        chunk.generate(&self.generator, device);
+                        self.chunks.insert(chunk_pos.clone(), chunk);
+                        self.chunks.get_mut(&chunk_pos)?
+                    }
+                };
+                let modified_voxels = chunk.dig(pos, 6., dt / 20.);
+                if modified_voxels > 0 {
+                    chunk.update_mesh(device);
+                }
+            }
+            return Some(());
+        }
+        None
+    }
+
     pub fn update(&mut self, queue: &wgpu::Queue, device: &Arc<Device>, game_state: &mut GameSate) {
         self.player.update(game_state);
 
         if self.generation_enabled {
             self.load_chunk(device, game_state);
         }
+
+        self.process_input(device, game_state);
 
         self.chunks.iter_mut().for_each(|(_pos, chunk)| {
             chunk.update();
@@ -235,6 +300,25 @@ impl World {
         for (_pos, chunk) in self.chunks.iter() {
             chunk.draw(render_pass);
         }
+    }
+
+    pub fn get_chunk_cord_by_vec(vec: Vec3<f32>) -> Position {
+        let x = vec.x / CHUNK_REAL_SIZE as f32;
+        let y = vec.y / CHUNK_REAL_SIZE as f32;
+        let z = vec.z / CHUNK_REAL_SIZE as f32;
+        Position::new(
+            if x < 0. { x as i64 - 1 } else { x as i64 },
+            if y < 0. { y as i64 - 1 } else { y as i64 },
+            if z < 0. { z as i64 - 1 } else { z as i64 },
+        )
+    }
+
+    pub fn get_chunk_by_vec(&self, vec: Vec3<f32>) -> Option<&Chunk> {
+        self.chunks.get(&Self::get_chunk_cord_by_vec(vec))
+    }
+
+    fn get_chunk_mut(&mut self, chunk_pos: Position) -> Option<&mut Chunk> {
+        self.chunks.get_mut(&chunk_pos)
     }
 
     pub fn get_chunk(&self, chunk_pos: Position) -> Option<&Chunk> {
