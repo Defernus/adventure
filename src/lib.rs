@@ -5,7 +5,7 @@ use winit::{
 };
 
 pub mod app_state;
-pub mod camera;
+pub mod player;
 pub mod sun;
 #[cfg(test)]
 pub mod tests;

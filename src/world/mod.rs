@@ -9,7 +9,7 @@ use winit::window::Window;
 
 use crate::{
     app_state::game_state::GameSate,
-    camera::{state::CameraState, Camera},
+    player::camera::{state::CameraState, Camera},
     sun::Sun,
     texture,
     utils::position::{Position, PositionAroundIterator},
