@@ -1,4 +1,5 @@
-use crate::{utils::position::Position, vec::Vec3, vertex::Vertex, world::chunk::Chunk};
+use crate::world::Vertex;
+use crate::{utils::position::Position, vec::Vec3, world::chunk::Chunk};
 
 use self::triangulation_table::{get_index_by_voxels, TABLE};
 

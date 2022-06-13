@@ -3,9 +3,9 @@ use std::sync::Arc;
 use wgpu::{util::DeviceExt, Device, RenderPass};
 
 use crate::{
+    app_state::game_state::graphics::vertex::Vertex,
     utils::{direction::Direction, position::Position, true_mod::true_mod},
     vec::Vec3,
-    vertex::Vertex,
 };
 
 use super::{

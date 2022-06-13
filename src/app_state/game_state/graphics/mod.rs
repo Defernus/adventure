@@ -4,6 +4,9 @@ use winit::dpi::PhysicalPosition;
 use crate::texture;
 use winit::window::Window;
 
+pub mod mesh;
+pub mod vertex;
+
 pub struct GameGraphics {
     pub surface: wgpu::Surface,
     pub device: Arc<wgpu::Device>,

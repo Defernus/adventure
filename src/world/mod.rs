@@ -1,3 +1,4 @@
+use crate::app_state::game_state::graphics::vertex::Vertex;
 use std::{
     collections::{self, BTreeMap},
     sync::Arc,
@@ -14,7 +15,6 @@ use crate::{
     texture,
     utils::position::{Position, PositionAroundIterator},
     vec::Vec3,
-    vertex::Vertex,
 };
 
 use self::{
