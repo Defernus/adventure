@@ -1,3 +1,1 @@
-# Adventure game
-
-Adventure - a game inspired by Dwarf Fortress
+moved to: [bevy-voxel-engine](https://github.com/Defernus/bevy-voxel-engine)
